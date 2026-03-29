@@ -1,25 +1,38 @@
 import { useState } from 'react'
 import './App.css'
-import RegisterForm from "./components/RegisterForm/RegisterForm.jsx";
-import LoginForm from "./components/LoginForm/LoginForm.jsx";
-import UserProfile from "./components/UserProfile/UserProfile.jsx";
-import Header from "./components/Header/Header.jsx";
+import UserProfile from './components/UserProfile/UserProfile.jsx'
+import Header from './components/Header/Header.jsx'
+import AuthModal from './components/AuthModal/AuthModal.jsx'
 
 function App() {
   const [msg, setMsg] = useState('')
+  const [authOpen, setAuthOpen] = useState(false)
+  const [userName, setUserName] = useState(
+    () => localStorage.getItem('username') || null
+  )
+
+  function handleLoggedIn(name) {
+    if (name) {
+      localStorage.setItem('username', name)
+      setUserName(name)
+    }
+    setAuthOpen(false)
+  }
 
   return (
     <>
-
-        <Header />
-        <RegisterForm onMessage={setMsg} />
-
-        <LoginForm onMessage={setMsg} />
-
-        <UserProfile onMessage={setMsg} />
-        <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }} >
-          {msg}
-        </pre>
+      <Header
+        onOpenAuth={() => setAuthOpen(true)}
+        userName={userName}
+      />
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onMessage={setMsg}
+        onLoggedIn={handleLoggedIn}
+      />
+      <UserProfile onMessage={setMsg} />
+      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{msg}</pre>
     </>
   )
 }
