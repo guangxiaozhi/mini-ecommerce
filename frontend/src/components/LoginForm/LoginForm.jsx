@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { login } from '../../api/auth.js'
 
-export default function LoginForm({onMessage}){
+export default function LoginForm({ onMessage, onLoggedIn }) {
     const [username,setUsername] = useState('')
     const [password, setPassword] = useState('')
 
@@ -12,6 +12,9 @@ export default function LoginForm({onMessage}){
             onMessage(JSON.stringify(data, null, 2))
             if (data?.token) {
                 localStorage.setItem('token', data.token)
+            }
+            if (onLoggedIn) {
+                onLoggedIn(data?.username ?? username)
             }
         } catch (err) {
             onMessage(err.message)

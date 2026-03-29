@@ -19,11 +19,18 @@ function App() {
     setAuthOpen(false)
   }
 
+  function handleLogout(){
+      localStorage.removeItem('token')
+      localStorage.removeItem('username')
+      setUserName(null)
+  }
+
   return (
     <>
       <Header
         onOpenAuth={() => setAuthOpen(true)}
         userName={userName}
+        onLogout={handleLogout}
       />
       <AuthModal
         open={authOpen}

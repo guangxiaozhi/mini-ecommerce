@@ -1,6 +1,36 @@
+import { useState, useEffect, useRef } from "react";
 import './Header.css'
 
-export default function Header({ onOpenAuth }) {
+export default function Header({ onOpenAuth, userName, onLogout }) {
+    const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+    const accountWrapRef = useRef(null)
+    const accountBtnRef = useRef(null)
+    const [menuPos, setMenuPos] = useState({top: 0, right: 0})
+
+    // 点击页面其它地方关闭菜单
+    useEffect(() => {
+        if (!accountMenuOpen || !accountBtnRef.current) return
+
+        const rect = accountBtnRef.current.getBoundingClientRect()
+        setMenuPos({
+            top: rect.bottom + 8,
+            right: window.innerWidth - rect.right,
+            })
+
+        }, [accountMenuOpen])
+
+    useEffect(() => {
+        if (!accountMenuOpen) return
+        function handlePointerDown(e) {
+            if (accountWrapRef.current && !accountWrapRef.current.contains(e.target)) {
+                setAccountMenuOpen(false)
+            }
+        }
+
+        document.addEventListener('pointerdown', handlePointerDown)
+        return () => document.removeEventListener('pointerdown', handlePointerDown)
+    }, [accountMenuOpen])
+
     return (
         <header className="site-header">
             <div className="site-header__inner">
@@ -62,13 +92,60 @@ export default function Header({ onOpenAuth }) {
                     </button>
                 </div>
 
-                <button type="button" className="site-header__account" onClick={onOpenAuth}>
-                    <span className="site-header__account-icon" aria-hidden>👤</span>
-                    <span className="site-header__account-text">
-                        <span className="site-header__account-line1">Hello, sign in</span>
-                        <span className="site-header__account-line2">Account & Lists</span>
-                    </span>
-                </button>
+                <div  className="site-header__account-wrap" ref={accountWrapRef}>
+                    <button type="button" className="site-header__account" ref={accountBtnRef} onClick={() => {
+                        if (userName) {
+                            setAccountMenuOpen((open) => !open)
+                        } else {
+                            onOpenAuth?.()
+                        }
+                    }}
+                    >
+                        <span className="site-header__account-icon" aria-hidden>👤</span>
+                        <span className="site-header__account-text">
+                            <span className="site-header__account-line1">
+                              {userName ? `Hello, ${userName}` : 'Hello, sign in'}
+                            </span>
+                            <span className="site-header__account-line2">Account & Lists</span>
+                        </span>
+                    </button>
+                    {userName && accountMenuOpen && (
+                        <div className="site-header__account-menu" role="menu" style={{
+                            position: 'fixed',
+                            top: menuPos.top,
+                            right: menuPos.right,
+                            zIndex: 4000,
+                        }}>
+                            <div className="site-header__account-menu-user">
+                                <div className="site-header__account-menu-name">{userName}</div>
+                                <div className="site-header__account-menu-email">
+                                    {/* 后端没有邮箱时可写死占位或删掉这一行 */}
+                                    {userName}@minishop.local
+                                </div>
+                            </div>
+
+                            <button type="button" className="site-header__account-menu-profile">
+                                My Profile
+                            </button>
+
+                            <div className="site-header__account-menu-divider" />
+
+                            <button
+                                type="button"
+                                className="site-header__account-menu-logout"
+                                onClick={() => {
+                                    onLogout?.()
+                                    setAccountMenuOpen(false)
+                                }}
+                            >
+                                <span className="site-header__account-menu-logout-icon" aria-hidden>
+                                  ⎋
+                                </span>
+                                Log Out
+                            </button>
+                        </div>
+                    )}
+                </div>
 
                 <button type="button" className="site-header__returns" aria-label="退货与订单">
                     <span className="site-header__returns-line1">Returns</span>

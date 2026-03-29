@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { register } from '../../api/auth.js'
 
-export default function RegisterForm({onMessage}){
+export default function RegisterForm({ onMessage, onLoggedIn }) {
     const [username,setUsername] = useState('')
     const [password, setPassword] = useState('')
 
     async function handleRegister(e){
         e.preventDefault()
         try {
-            const data = await register({username, password})
-            onMessage(JSON.stringify(data,null,2))
-            if (data?.token){
+            const data = await register({ username, password })
+            onMessage(JSON.stringify(data, null, 2))
+            if (data?.token) {
                 localStorage.setItem('token', data.token)
+            }
+            if (onLoggedIn) {
+                onLoggedIn(data?.username ?? username)
             }
         }catch (err) {
             onMessage(err.message)

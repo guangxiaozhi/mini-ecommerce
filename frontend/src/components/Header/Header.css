@@ -2,7 +2,6 @@
     background: #131921; /* 接近 amazon，可按截图微调 */
     color: #fff;
     padding: 0.5rem 1rem;
-    overflow-x: auto;
 }
 
 .site-header__inner {
@@ -16,6 +15,7 @@
     gap: 1rem;
     flex-wrap: nowrap;
     min-width: max-content;
+    overflow-x: auto;
 }
 
 .site-header__logo {
@@ -236,4 +236,68 @@
     font-size: 0.95rem;
     font-weight: 700;
     padding-bottom: 2px;
+}
+
+.site-header__account-menu {
+    /*position: fixed;*/
+    /*top: calc(100% + 6px);*/
+    right: 0;
+    z-index: 3500;
+    min-width: 220px;
+    padding: 12px;
+    background: #fff;
+    color: #111;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    text-align: left;
+}
+
+.site-header__account-wrap {
+    position: relative;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+}
+
+.site-header__account-menu-name,
+.site-header__account-menu-email {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.site-header__account-menu-email {
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+
+.site-header__account-menu-profile {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.site-header__account-menu-divider {
+    height: 1px;
+    background: #e7e7e7;
+    margin: 10px 0;
+}
+
+.site-header__account-menu-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px 0;
+}
+
+.site-header__account-menu-logout:hover {
+    color: #c7511f;
 }
