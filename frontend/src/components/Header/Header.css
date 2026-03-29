@@ -1,0 +1,239 @@
+.site-header {
+    background: #131921; /* 接近 amazon，可按截图微调 */
+    color: #fff;
+    padding: 0.5rem 1rem;
+    overflow-x: auto;
+}
+
+.site-header__inner {
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+    padding: 0.5rem 1.25rem;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: nowrap;
+    min-width: max-content;
+}
+
+.site-header__logo {
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+
+.site-header__deliver {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.35rem;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    text-align: left;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.site-header__deliver:hover {
+    outline: 1px solid #fff;
+}
+
+.site-header__deliver-icon {
+    flex-shrink: 0;
+    margin-bottom: 2px;
+}
+
+.site-header__deliver-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.site-header__deliver-line1 {
+    font-size: 0.72rem;
+    color: #ccc;
+}
+
+.site-header__deliver-line2 {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.site-header__search {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    max-width: none;
+    margin: 0 0.75rem;
+    height: 40px;
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 12rem;
+}
+
+.site-header__search-all {
+    width: 52px;
+    flex-shrink: 0;
+    border: none;
+    background: #e6e6e6;
+    font-size: 0.75rem;
+    padding: 0 0.25rem;
+    cursor: pointer;
+    color: #111;
+}
+
+.site-header__search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    padding: 0 0.75rem;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.site-header__search-btn {
+    flex-shrink: 0;
+    width: 48px;
+    border: none;
+    background: #febd69;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.site-header__search-btn:hover {
+    background: #f3a847;
+}
+
+.site-header__account {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.site-header__account:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.site-header__account-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.site-header__account-line1 {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #ccc;
+}
+
+.site-header__account-line2 {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    opacity: 0.9;
+    color: #fff;
+}
+
+.site-header__returns {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    text-align: left;
+    line-height: 1.1;
+}
+
+.site-header__returns:hover {
+    outline: 1px solid #fff;
+}
+
+.site-header__returns-line1 {
+    font-size: 0.72rem;
+    color: #ccc;
+}
+
+.site-header__returns-line2 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.site-header__cart {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 0.25rem;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.site-header__cart:hover {
+    outline: 1px solid #fff;
+}
+
+.site-header__cart-wrap {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 36px;
+}
+
+.site-header__cart-count {
+    position: absolute;
+    top: 46%;
+    left: 55%;
+    transform: translate(-50%, -50%);
+
+    padding: 0;              /* 不需要给色块留边 */
+    background: transparent; /* 不要橙底，可写 none */
+    border-radius: 0;
+
+    color: #f08804;          /* 常见 Amazon 橙；也可用 #febd69 */
+    font-size: 1rem;      /* 可按图标大小微调 */
+    font-weight: 700;
+    line-height: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.site-header__cart-icon {
+    display: block;
+    width: 52px;
+    height: 36px;
+    color: #fff;
+}
+
+.site-header__cart-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding-bottom: 2px;
+}
