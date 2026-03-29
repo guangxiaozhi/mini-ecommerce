@@ -8,5 +8,8 @@ public class HomeController {
     @GetMapping("/products")
     public String home(){
         return "Products Coming soon!";
+    @GetMapping("/")
+    public String root() {
+        return "mini-ecommerce-backend is running. GET /api/products for catalog.";
     }
 }
