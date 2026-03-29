@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react"
+import { useNavigate, Link } from 'react-router-dom'
 import './Header.css'
 
 export default function Header({ onOpenAuth, userName, onLogout }) {
@@ -6,7 +7,7 @@ export default function Header({ onOpenAuth, userName, onLogout }) {
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
     const [menuPos, setMenuPos] = useState({top: 0, right: 0})
-
+    const navigate = useNavigate()
     // 点击页面其它地方关闭菜单
     useEffect(() => {
         if (!accountMenuOpen || !accountBtnRef.current) return
@@ -35,7 +36,7 @@ export default function Header({ onOpenAuth, userName, onLogout }) {
         <header className="site-header">
             <div className="site-header__inner">
                 <div className="site-header__brand">
-                    <span className="site-header__logo">MiniShop</span>
+                    <Link className="site-header__logo" to={"/"}>MiniShop</Link>
                 </div>
                 <button type="button" className="site-header__deliver" aria-label="选择配送地址">
                     <svg
@@ -124,7 +125,14 @@ export default function Header({ onOpenAuth, userName, onLogout }) {
                                 </div>
                             </div>
 
-                            <button type="button" className="site-header__account-menu-profile">
+                            <button
+                                type="button"
+                                className="site-header__account-menu-profile"
+                                onClick={() => {
+                                    navigate('/profile')
+                                    sestAccountMenuOpen(false)
+                                }}
+                            >
                                 My Profile
                             </button>
 

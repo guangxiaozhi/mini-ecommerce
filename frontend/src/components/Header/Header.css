@@ -23,8 +23,12 @@
     font-size: 1.25rem;
     letter-spacing: 0.02em;
     flex-shrink: 0;
+    text-decoration: none;
+    color: inherit;
 }
-
+.site-header__logo:hover {
+    outline: 1px solid #fff;
+}
 .site-header__deliver {
     display: flex;
     align-items: flex-end;
@@ -127,6 +131,7 @@
 
 .site-header__account:hover {
     background: rgba(255, 255, 255, 0.12);
+    outline: 1px solid #fff;
 }
 
 .site-header__account-icon {
