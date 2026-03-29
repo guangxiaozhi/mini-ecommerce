@@ -1,0 +1,74 @@
+.auth-modal__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.auth-modal__panel {
+    position: relative;
+    background: #fff;
+    border-radius: 12px;
+    max-width: 440px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: auto;
+    padding: 1.5rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.auth-modal__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #666;
+}
+
+.auth-modal__title {
+    margin: 0 0 0.25rem;
+    text-align: center;
+    font-size: 1.25rem;
+}
+
+.auth-modal__hint {
+    margin: 0 0 1rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #2e7d32;
+}
+
+.auth-modal__tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.auth-modal__tabs button {
+    flex: 1;
+    padding: 0.6rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 2px solid transparent;
+}
+
+.auth-modal__tabs button.is-active {
+    color: #c4121e;
+    border-bottom-color: #c4121e;
+}
+
+.auth-modal__body section h2 {
+    display: none; /* 弹窗已有大标题，隐藏表单里重复的「登录」「注册」小标题；若你想保留，删掉这规则 */
+}
