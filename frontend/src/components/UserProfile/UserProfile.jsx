@@ -17,7 +17,7 @@ export default function UserProfile({ onMessage }) {
         try {
             const data = await getMe(token)
             setProfile(data)
-            onMessage?.(JSON.stringify(data, null, 2))
+            // onMessage?.(JSON.stringify(data, null, 2))
         } catch (err) {
             setProfile(null)
             onMessage?.(err.message)
