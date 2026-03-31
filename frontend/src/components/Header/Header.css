@@ -2,6 +2,8 @@
     background: #131921; /* 接近 amazon，可按截图微调 */
     color: #fff;
     padding: 0.5rem 1rem;
+    min-width: 100%;
+    width: fit-content;
 }
 
 .site-header__inner {
@@ -14,7 +16,7 @@
     align-items: center;
     gap: 1rem;
     flex-wrap: nowrap;
-    min-width: max-content;
+    /*min-width: max-content;*/
     overflow-x: auto;
 }
 
