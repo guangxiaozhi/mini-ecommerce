@@ -48,8 +48,8 @@ export default function UserProfile({ onMessage }) {
             <div className="profile-page__inner">
                 {noToken && (
                     <section className="profile-empty" aria-live="polite">
-                        <h1 className="profile-page__title">用户资料</h1>
-                        <p className="profile-empty__text">请先登录后查看账户信息。</p>
+                        <h1 className="profile-page__title">Profile</h1>
+                        <p className="profile-empty__text">Please sign in to view your account information.</p>
                     </section>
                 )}
                 {!noToken && (
@@ -61,18 +61,18 @@ export default function UserProfile({ onMessage }) {
                                     {profile?.username?.charAt(0)?.toUpperCase() ?? '?'}
                                 </div>
                                 <div>
-                                    <p className="profile-hero__greeting">你好，{profile?.username ?? '…'}</p>
-                                    <p className="profile-hero__sub">管理你的账户信息</p>
+                                    <p className="profile-hero__greeting">hello, {profile?.username ?? '…'}</p>
+                                    <p className="profile-hero__sub">Manage your account information</p>
                                 </div>
                             </div>
 
                             <dl className="profile-hero__meta">
                                 <div className="profile-hero__row">
-                                    <dt>用户名</dt>
+                                    <dt>Username</dt>
                                     <dd>{profile?.username ?? '—'}</dd>
                                 </div>
                                 <div className="profile-hero__row">
-                                    <dt>角色</dt>
+                                    <dt>Role</dt>
                                     <dd>{mapAuthoritiesToRoleLabel(profile?.authorities)}</dd>
                                 </div>
                             </dl>
@@ -84,7 +84,7 @@ export default function UserProfile({ onMessage }) {
                                     onClick={loadProfile}
                                     disabled={loading}
                                 >
-                                    {loading ? '加载中…' : '刷新资料'}
+                                    {loading ? 'loading…' : 'Refresh profile'}
                                 </button>
                             </div>
                         </section>
@@ -92,19 +92,19 @@ export default function UserProfile({ onMessage }) {
                         {/*购物入口*/}
                         <section className="profile-card" aria-labelledby="profile-shop-heading">
                             <h2 id="profile-shop-heading" className="profile-card__title">
-                                购物
+                                Shopping
                             </h2>
                             <ul className="profile-links">
                                 <li>
                                     <a className="profile-links__item" href="#" onClick={(e) => e.preventDefault()}>
-                                        <span className="profile-links__label">我的订单</span>
-                                        <span className="profile-links__hint">即将推出</span>
+                                        <span className="profile-links__label">My orders</span>
+                                        <span className="profile-links__hint">Coming soon</span>
                                     </a>
                                 </li>
                                 <li>
                                     <a className="profile-links__item" href="#" onClick={(e) => e.preventDefault()}>
-                                        <span className="profile-links__label">收货地址</span>
-                                        <span className="profile-links__hint">即将推出</span>
+                                        <span className="profile-links__label">Shipping addresses</span>
+                                        <span className="profile-links__hint">Coming soon</span>
                                     </a>
                                 </li>
                             </ul>
@@ -113,28 +113,28 @@ export default function UserProfile({ onMessage }) {
                         {/*账户与安全 + 可折叠「高级」*/}
                         <section className="profile-card" aria-labelledby="profile-security-heading">
                             <h2 id="profile-security-heading" className="profile-card__title">
-                                账户与安全
+                                Account & Security
                             </h2>
                             <ul className="profile-links">
                                 <li>
               <span className="profile-links__item profile-links__item--disabled">
-                <span className="profile-links__label">修改密码</span>
-                <span className="profile-links__hint">即将推出</span>
+                <span className="profile-links__label">Change password</span>
+                <span className="profile-links__hint">Coming soon</span>
               </span>
                                 </li>
                                 <li>
               <span className="profile-links__item profile-links__item--disabled">
-                <span className="profile-links__label">邮件与通知</span>
-                <span className="profile-links__hint">即将推出</span>
+                <span className="profile-links__label">Email & notifications</span>
+                <span className="profile-links__hint">Coming soon</span>
               </span>
                                 </li>
                             </ul>
 
                             <details className="profile-advanced">
-                                <summary className="profile-advanced__summary">高级</summary>
+                                <summary className="profile-advanced__summary">Advanced</summary>
                                 <div className="profile-advanced__body">
                                     <p className="profile-advanced__note">
-                                        以后可放：登录设备、两步验证等。当前为占位。
+                                        you can add login devices,two-step verification
                                     </p>
                                 </div>
                             </details>
@@ -142,11 +142,11 @@ export default function UserProfile({ onMessage }) {
 
                         {/*加「页脚」小链接*/}
                         <footer className="profile-footer">
-                            <a href="#" onClick={(e) => e.preventDefault()}>帮助中心</a>
+                            <a href="#" onClick={(e) => e.preventDefault()}>Help center</a>
                             <span className="profile-footer__sep"> · </span>
-                            <a href="#" onClick={(e) => e.preventDefault()}>隐私声明</a>
+                            <a href="#" onClick={(e) => e.preventDefault()}>Privacy policy</a>
                             <span className="profile-footer__sep"> · </span>
-                            <a href="#" onClick={(e) => e.preventDefault()}>使用条款</a>
+                            <a href="#" onClick={(e) => e.preventDefault()}>Terms of service</a>
                         </footer>
 
                     </>
