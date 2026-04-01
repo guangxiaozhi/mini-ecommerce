@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link } from 'react-router-dom'
 import './Header.css'
 
-export default function Header({ onOpenAuth, userName, onLogout }) {
+export default function Header({ onOpenAuth, userName, onLogout, cartCount = 0 }) {
     const [accountMenuOpen, setAccountMenuOpen] = useState(false)
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
@@ -130,7 +130,7 @@ export default function Header({ onOpenAuth, userName, onLogout }) {
                                 className="site-header__account-menu-profile"
                                 onClick={() => {
                                     navigate('/profile')
-                                    sestAccountMenuOpen(false)
+                                    setAccountMenuOpen(false)
                                 }}
                             >
                                 My Profile
@@ -183,7 +183,7 @@ export default function Header({ onOpenAuth, userName, onLogout }) {
                             <circle cx="9" cy="20" r="1.6" fill="currentColor" />
                           <circle cx="18" cy="20" r="1.6" fill="currentColor" />
                         </svg>
-                        <span className="site-header__cart-count">0</span>
+                        <span className="site-header__cart-count">{cartCount}</span>
                       </span>
                     <span className="site-header__cart-label">Cart</span>
                 </button>
