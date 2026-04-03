@@ -160,7 +160,7 @@ export default function Header({ onOpenAuth, userName, onLogout, cartCount = 0 }
                     <span className="site-header__returns-line2">& Orders</span>
                 </button>
 
-                <button type="button" className="site-header__cart" aria-label="购物车">
+                <button type="button" className="site-header__cart" onClick={()=>navigate('/cart')} aria-label="购物车">
                       <span className="site-header__cart-wrap">
                         <svg
                             className="site-header__cart-icon"
