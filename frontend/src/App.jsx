@@ -50,6 +50,7 @@ function App() {
         const token = localStorage.getItem('token')
         if (!token) {
             setUserName(null)
+            setIsAdmin(false)
             return
         }
 
@@ -60,12 +61,14 @@ function App() {
                     loadCartCount()
                 } else {
                     setUserName(null)
+                    setIsAdmin(false)
                 }
             })
             .catch(() => {
                 localStorage.removeItem('token')
                 localStorage.removeItem('username')
                 setUserName(null)
+                setIsAdmin(false)
             })
     }, [])
     return (

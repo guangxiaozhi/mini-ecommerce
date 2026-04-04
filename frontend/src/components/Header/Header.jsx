@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import './Header.css'
 
 export default function Header({ onOpenAuth, userName, onLogout, cartCount = 0 }) {
+export default function Header({ onOpenAuth, userName, isAdmin, onLogout }) {
     const [accountMenuOpen, setAccountMenuOpen] = useState(false)
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
@@ -135,6 +136,18 @@ export default function Header({ onOpenAuth, userName, onLogout, cartCount = 0 }
                             >
                                 My Profile
                             </button>
+                            {isAdmin && (
+                                <button
+                                    type="button"
+                                    className="site-header__account-menu-profile"
+                                    onClick={() => {
+                                        navigate('/admin/products')
+                                        setAccountMenuOpen(false)
+                                    }}
+                                >
+                                    Admin · Products
+                                </button>
+                            )}
 
                             <div className="site-header__account-menu-divider" />
 
