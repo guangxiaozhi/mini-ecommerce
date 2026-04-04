@@ -36,3 +36,5 @@ backend/src/main/resources/application-local.yml
 
 frontend/node_modules/
 frontend/dist/
+
+backend\src\main\java\com\guang\miniecommercebackend\common
