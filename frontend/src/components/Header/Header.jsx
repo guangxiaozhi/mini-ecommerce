@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link } from 'react-router-dom'
 import './Header.css'
 
-export default function Header({ onOpenAuth, userName, isAdmin, onLogout }) {
+export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCount = 0 }) {
     const [accountMenuOpen, setAccountMenuOpen] = useState(false)
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
@@ -172,7 +172,7 @@ export default function Header({ onOpenAuth, userName, isAdmin, onLogout }) {
                     <span className="site-header__returns-line2">& Orders</span>
                 </button>
 
-                <button type="button" className="site-header__cart" aria-label="购物车">
+                <button type="button" className="site-header__cart" onClick={()=>navigate('/cart')} aria-label="购物车">
                       <span className="site-header__cart-wrap">
                         <svg
                             className="site-header__cart-icon"
@@ -195,7 +195,7 @@ export default function Header({ onOpenAuth, userName, isAdmin, onLogout }) {
                             <circle cx="9" cy="20" r="1.6" fill="currentColor" />
                           <circle cx="18" cy="20" r="1.6" fill="currentColor" />
                         </svg>
-                        <span className="site-header__cart-count">0</span>
+                        <span className="site-header__cart-count">{cartCount}</span>
                       </span>
                     <span className="site-header__cart-label">Cart</span>
                 </button>
