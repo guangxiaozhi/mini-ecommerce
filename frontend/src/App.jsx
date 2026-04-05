@@ -24,25 +24,23 @@ function App() {
             setUserName(name)
         }
         setAuthOpen(false)
+
+        const t = localStorage.getItem('token')
+        if (t) {
+            getMe(t)
+                .then((data) => {
+                    const auth = String(data?.authorities ?? '')
+                    setIsAdmin(auth.includes('ROLE_ADMIN'))
+                })
+                .catch(() => setIsAdmin((false)))
+        } else {
+            setIsAdmin(false)
+        }
+
         loadCartCount()
     }
 
-    setAuthOpen(false)
-
-    const t = localStorage.getItem('token')
-    if (t) {
-        getMe(t)
-            .then((data) => {
-                const auth = String(data?.authorities ?? '')
-                setIsAdmin(auth.includes('ROLE_ADMIN'))
-            })
-            .catch(() => setIsAdmin((false)))
-    } else {
-        setIsAdmin(false)
-    }
-  }
-
-  function handleLogout() {
+    function handleLogout() {
         localStorage.removeItem('token')
         localStorage.removeItem('username')
         setUserName(null)
