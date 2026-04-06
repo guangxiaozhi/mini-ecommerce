@@ -175,7 +175,7 @@ export default function Cart({ onCartUpdate, onNeedAuth }) {
                                     {/* Name + unit price */}
                                     <div className="cart-row__info">
                                         <p className="cart-row__name">{item.productName}</p>
-                                        <p className="cart-row__unit">${Number(item.price).toFixed(2)} each</p>
+                                        <p className="cart-row__unit">${Number(item.unitPrice).toFixed(2)} each</p>
                                     </div>
 
                                     {/* Quantity stepper */}
