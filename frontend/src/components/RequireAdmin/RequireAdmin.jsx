@@ -36,7 +36,7 @@ export default function RequireAdmin({ children }) {
     }
 
     if (status === 'denied') {
-        return <Navigate to="/" replace />
+        return <Navigate to="/" replace state={{ openAuth: true }}  />
     }
 
     return <>{children}</>
