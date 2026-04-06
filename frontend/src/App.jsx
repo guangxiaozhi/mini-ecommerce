@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { getMe} from "./api/auth.js";
 import {getCart} from './api/cart.js';
 import './App.css'
@@ -18,6 +18,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [cartCount, setCartCount] = useState(0)
   const navigate = useNavigate()
+  const location = useLocation()
 
   function handleLoggedIn(name) {
     if (name) {
@@ -93,6 +94,13 @@ function App() {
                 setIsAdmin(false)
             })
     }, [])
+
+    useEffect(() => {
+        if (location.state?.openAuth) {
+            setAuthOpen(true)
+            navigate(location.pathname, { replace: true, state: {} })
+        }
+    }, [location, navigate])
   return (
     <>
       <Header
