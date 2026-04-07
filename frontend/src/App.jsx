@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { getMe} from "./api/auth.js";
-import {getCart} from './api/cart.js';
+import {addToCart, getCart} from './api/cart.js';
 import './App.css'
 import UserProfile from './components/UserProfile/UserProfile.jsx'
 import Header from './components/Header/Header.jsx'
@@ -130,7 +130,15 @@ function App() {
             />
             <Route
                 path='/products/:id'
-                element={<ProductDetail/>}
+                element={<ProductDetail
+                            isLoggedIn={!!userName}
+                            onNeedAuth={()=>setAuthOpen(true)}
+                            onAdd={async (productId)=>{
+                                const token = localStorage.getItem('token');
+                                const cart = await addToCart(token, productId, 1);
+                                setCartCount(cart.itemCount);
+                            }}
+                />}
             />
             <Route
                 path="/profile"
