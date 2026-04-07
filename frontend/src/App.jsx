@@ -104,7 +104,10 @@ function App() {
   return (
     <>
       <Header
-        onOpenAuth={() => setAuthOpen(true)}
+        onOpenAuth={() => {
+            setMsg('')
+            setAuthOpen(true)
+        }}
         userName={userName}
         isAdmin={isAdmin}
         onLogout={handleLogout}
@@ -112,18 +115,25 @@ function App() {
       />
       <AuthModal
         open={authOpen}
-        onClose={() => setAuthOpen(false)}
+        onClose={() => {
+            setMsg('')
+            setAuthOpen(false)
+        }}
         onMessage={setMsg}
         onLoggedIn={handleLoggedIn}
+        message={msg}
       />
-        {msg ? <p role='alert'>{msg}</p> : null}
+
         <Routes>
             <Route
                 path='/'
                 element={
                     <ProductCatalog
                         userName={userName}
-                        onNeedAuth={() => setAuthOpen(true)}
+                        onNeedAuth={() => {
+                            setMsg('')
+                            setAuthOpen(true)
+                        }}
                         onCartUpdate={setCartCount}
                     />
                 }
@@ -142,7 +152,10 @@ function App() {
             />
             <Route
                 path="/cart"
-                element={<Cart onCartUpdate={setCartCount} onNeedAuth={() => setAuthOpen(true)}/>}
+                element={<Cart onCartUpdate={setCartCount} onNeedAuth={() => {
+                    setMsg('')
+                    setAuthOpen(true)
+                }}/>}
             />
         </Routes>
 
