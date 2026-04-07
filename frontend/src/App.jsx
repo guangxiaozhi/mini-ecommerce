@@ -53,6 +53,9 @@ function App() {
       if(location.pathname === '/admin/products'){
           navigate('/', {replace:true})
       }
+      if (location.pathname === '/cart') {
+          navigate('/', { replace: true })
+      }
   }
 
     function loadCartCount() {
