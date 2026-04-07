@@ -10,7 +10,8 @@ export default function LoginForm({ onMessage, onLoggedIn }) {
         e.preventDefault()
         try {
             const data = await login({ username, password })
-            onMessage(JSON.stringify(data, null, 2))
+            // onMessage(JSON.stringify(data, null, 2))
+            onMessage('')
             if (data?.token) {
                 localStorage.setItem('token', data.token)
             }

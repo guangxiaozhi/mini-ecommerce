@@ -116,6 +116,7 @@ function App() {
         onMessage={setMsg}
         onLoggedIn={handleLoggedIn}
       />
+        {msg ? <p role='alert'>{msg}</p> : null}
         <Routes>
             <Route
                 path='/'
