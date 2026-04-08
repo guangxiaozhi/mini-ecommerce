@@ -7,6 +7,7 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
     const [locOpen, setLocOpen] = useState(false)
     const [cityDraft, setCityDraft] = useState('')
     const [zipDraft, setZipDraft] = useState("")
+    const [locToast, setLocToast] = useState('')
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
     const [menuPos, setMenuPos] = useState({top: 0, right: 0})
@@ -74,7 +75,7 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                     </svg>
                     <span className="site-header__deliver-text">
                         <span className="site-header__deliver-line1">
-                          Delivering to {shippingLocation?.city || 'Seattle' } {shippingLocation?.zip || 'Seattle' }
+                          Delivering to {shippingLocation?.city || 'Seattle' } {shippingLocation?.zip ? ` ${shippingLocation.zip}` : '' }
                         </span>
                         <span className="site-header__deliver-line2">Update location</span>
                     </span>
@@ -262,9 +263,14 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                             <input
                                 className="loc-modal__input"
                                 value={zipDraft}
-                                onChange={(e) => setZipDraft(e.target.value)}
+                                onChange={(e) => {
+                                    const digits = e.target.value.replace(/\D/g, '')
+                                    setZipDraft(digits.slice(0, 9))
+                                }}
                                 placeholder="e.g. 98101"
                                 inputMode="numeric"
+                                maxLength={9}
+                                pattern="[0-9]*"
                             />
                         </label>
 
@@ -278,8 +284,18 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                                 onClick={() => {
                                     const city = cityDraft.trim()
                                     const zip = zipDraft.trim()
+
                                     if (!city) return
+
+                                    if (zip && zip.length !== 5 && zip.length !== 9) {
+                                        // 先用最简单方式
+                                        alert('ZIP should be 5 or 9 digits.')
+                                        return
+                                    }
+
                                     onChangeShippingLocation?.({ city, zip })
+                                    setLocToast(`Location updated to ${city}${zip ? ` ${zip}` : ''}`)
+                                    setTimeout(() => setLocToast(''), 2500)
                                     setLocOpen(false)
                                 }}
                             >
@@ -287,6 +303,11 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                             </button>
                         </div>
                     </div>
+                </div>
+            ) : null}
+            {locToast ? (
+                <div className="loc-toast" role="status" aria-live="polite">
+                    {locToast}
                 </div>
             ) : null}
         </header>
