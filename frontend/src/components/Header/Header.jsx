@@ -4,6 +4,9 @@ import './Header.css'
 
 export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCount = 0, searchValue, onSearchChange, shippingLocation, onChangeShippingLocation }) {
     const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+    const [locOpen, setLocOpen] = useState(false)
+    const [cityDraft, setCityDraft] = useState('')
+    const [zipDraft, setZipDraft] = useState("")
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
     const [menuPos, setMenuPos] = useState({top: 0, right: 0})
@@ -47,7 +50,16 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                         MiniShop
                     </Link>
                 </div>
-                <button type="button" className="site-header__deliver" aria-label="选择配送地址">
+                <button
+                    type="button"
+                    className="site-header__deliver"
+                    aria-label="选择配送地址"
+                    onClick={() => {
+                        setCityDraft(shippingLocation?.city || '')
+                        setZipDraft(shippingLocation?.zip || '')
+                        setLocOpen(true)
+                    }}
+                >
                     <svg
                         className="site-header__deliver-icon"
                         width="20"
@@ -211,6 +223,72 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                     <span className="site-header__cart-label">Cart</span>
                 </button>
             </div>
+            {locOpen ? (
+                <div
+                    className="loc-modal__backdrop"
+                    role="dialog"
+                    aria-modal="true"
+                    onClick={() => setLocOpen(false)}
+                >
+                    <div className="loc-modal__panel" onClick={(e) => e.stopPropagation()}>
+                        <div className="loc-modal__top">
+                            <h3 className="loc-modal__title">Choose your location</h3>
+                            <button
+                                type="button"
+                                className="loc-modal__close"
+                                onClick={() => setLocOpen(false)}
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <p className="loc-modal__hint">
+                            Delivery options and delivery speeds may vary for different locations
+                        </p>
+
+                        <label className="loc-modal__label">
+                            City
+                            <input
+                                className="loc-modal__input"
+                                value={cityDraft}
+                                onChange={(e) => setCityDraft(e.target.value)}
+                                placeholder="e.g. Seattle"
+                            />
+                        </label>
+
+                        <label className="loc-modal__label">
+                            ZIP (optional)
+                            <input
+                                className="loc-modal__input"
+                                value={zipDraft}
+                                onChange={(e) => setZipDraft(e.target.value)}
+                                placeholder="e.g. 98101"
+                                inputMode="numeric"
+                            />
+                        </label>
+
+                        <div className="loc-modal__actions">
+                            <button type="button" className="loc-modal__btn" onClick={() => setLocOpen(false)}>
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="loc-modal__btn loc-modal__btn--primary"
+                                onClick={() => {
+                                    const city = cityDraft.trim()
+                                    const zip = zipDraft.trim()
+                                    if (!city) return
+                                    onChangeShippingLocation?.({ city, zip })
+                                    setLocOpen(false)
+                                }}
+                            >
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </header>
     )
 }
