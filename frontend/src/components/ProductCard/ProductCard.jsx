@@ -77,10 +77,13 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
     return (
         <article className={`pc-card${outOfStock ? ' pc-card--oos' : ''}`}>
 
-            <div className="pc-card__image" style={{ background: color.bg }}>
-                  <span className="pc-card__initial" style={{ color: color.text }}>
-                      {product.name.charAt(0).toUpperCase()}
-                  </span>
+            <div className="pc-card__image" style={!product.images?.length ? { background: color.bg } : {}}>
+                {product.images?.length
+                    ? <img src={product.images[0].imageUrl} alt={product.name} className="pc-card__img" />
+                    : <span className="pc-card__initial" style={{ color: color.text }}>
+                           {product.name.charAt(0).toUpperCase()}
+                      </span>
+                }
             </div>
 
             <div className="pc-card__body">
