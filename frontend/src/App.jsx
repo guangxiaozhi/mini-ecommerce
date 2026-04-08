@@ -21,6 +21,17 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const [productSearch, setProductSearch] = useState('')
+  const [shippingLocation, setShippingLocation]  = useState(() => {
+      try{
+          return JSON.parse(localStorage.getItem('shippingLocation') || 'null') || {city: 'Seattle', zip: '98000'}
+      }catch{
+          return {city:'Seattle', zip:'98000'}
+      }
+  })
+
+    useEffect(() => {
+        localStorage.setItem('shippingLocation', JSON.stringify(shippingLocation))
+    }, [shippingLocation]);
 
   function handleLoggedIn(name) {
     if (name) {
@@ -122,6 +133,8 @@ function App() {
         cartCount={cartCount}
         searchValue={productSearch}
         onSearchChange={setProductSearch}
+        shippingLocation={shippingLocation}
+        onChangeShippingLocation={setShippingLocation}
       />
       <AuthModal
         open={authOpen}

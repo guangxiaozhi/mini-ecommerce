@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link } from 'react-router-dom'
 import './Header.css'
 
-export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCount = 0, searchValue, onSearchChange }) {
+export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCount = 0, searchValue, onSearchChange, shippingLocation, onChangeShippingLocation }) {
     const [accountMenuOpen, setAccountMenuOpen] = useState(false)
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
@@ -62,7 +62,7 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                     </svg>
                     <span className="site-header__deliver-text">
                         <span className="site-header__deliver-line1">
-                          Delivering to Seattle
+                          Delivering to {shippingLocation?.city || 'Seattle' } {shippingLocation?.zip || 'Seattle' }
                         </span>
                         <span className="site-header__deliver-line2">Update location</span>
                     </span>
