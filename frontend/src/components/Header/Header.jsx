@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link } from 'react-router-dom'
 import './Header.css'
 
-export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCount = 0 }) {
+export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCount = 0, searchValue, onSearchChange }) {
     const [accountMenuOpen, setAccountMenuOpen] = useState(false)
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
@@ -80,6 +80,8 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                         className="site-header__search-input"
                         placeholder="Search MiniShop"
                         autoComplete="off"
+                        value={searchValue ?? ''}
+                        onChange={(e) => onSearchChange?.(e.target.value)}
                     />
 
                     <button type="button" className="site-header__search-btn" aria-label="搜索">
