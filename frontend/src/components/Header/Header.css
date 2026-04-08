@@ -308,3 +308,133 @@
 .site-header__account-menu-logout:hover {
     color: #c7511f;
 }
+
+.loc-modal__backdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5000;
+    padding: 16px;
+}
+
+.loc-modal__panel{
+    width: min(560px, calc(100vw - 48px));  /* 不要占满屏 */
+    max-height: min(640px, calc(100vh - 48px));
+    overflow: auto;
+    overflow-x: hidden;
+
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 18px 55px rgba(0,0,0,.30);
+    padding: 0;                /* 由内部分区负责 padding */
+    box-sizing: border-box;
+}
+
+.loc-modal__top{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+    color: #111;
+}
+
+.loc-modal__title{
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #111;
+}
+
+.loc-modal__close{
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    color: #111;
+}
+
+.loc-modal__hint{
+    margin: 16px 0 25px;
+    padding: 0 20px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.loc-modal__label{
+    display: block;
+    margin-top: 14px;
+    padding: 0 20px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.loc-modal__input{
+    width: 100%;
+    max-width: 100%;
+    margin-top: 8px;
+    padding: 12px 14px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 14px;
+    outline: none;
+
+    box-sizing: border-box;
+    font-size: 16px;
+    background: #fff;
+}
+
+.loc-modal__input:focus{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+
+.loc-modal__actions{
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    margin-top: 18px;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+}
+
+.loc-modal__btn{
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.loc-modal__btn--primary{
+    border-color: #facc15;
+    background: #facc15;
+}
+
+.loc-toast{
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 5200;
+    background: #111827;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
