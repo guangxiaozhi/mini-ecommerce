@@ -20,6 +20,7 @@ function App() {
   const [cartCount, setCartCount] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
+  const [productSearch, setProductSearch] = useState('')
 
   function handleLoggedIn(name) {
     if (name) {
@@ -119,6 +120,8 @@ function App() {
         isAdmin={isAdmin}
         onLogout={handleLogout}
         cartCount={cartCount}
+        searchValue={productSearch}
+        onSearchChange={setProductSearch}
       />
       <AuthModal
         open={authOpen}
@@ -142,6 +145,8 @@ function App() {
                             setAuthOpen(true)
                         }}
                         onCartUpdate={setCartCount}
+                        search={productSearch}
+                        onSearchChange={setProductSearch}
                     />
                 }
             />

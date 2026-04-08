@@ -26,12 +26,12 @@ function SkeletonCard() {
     );
 }
 
-export default function ProductCatalog({ userName, onNeedAuth, onCartUpdate }) {
+export default function ProductCatalog({ userName, onNeedAuth, onCartUpdate, search, onSearchChange }) {
     const [products, setProducts] = useState([]);
     const [loading,  setLoading]  = useState(true);
     const [error,    setError]    = useState('');
     const [sort,     setSort]     = useState('featured');
-    const [search,   setSearch]   = useState('');
+    // const [search,   setSearch]   = useState('');
     const [toast,    setToast]    = useState('');
     const location = useLocation();
     const navigate = useNavigate();
@@ -54,7 +54,7 @@ export default function ProductCatalog({ userName, onNeedAuth, onCartUpdate }) {
     useEffect(() => {
         const ts = location.state?.resetProductSearch;
         if (ts != null) {
-            setSearch('');
+            onSearchChange?.('');
             navigate(location.pathname, { replace: true, state: {} });
         }
     }, [location.state, location.pathname, navigate]);
@@ -63,7 +63,7 @@ export default function ProductCatalog({ userName, onNeedAuth, onCartUpdate }) {
     const displayed = useMemo(() => {
         let list = [...products];
 
-        if (search.trim()) {
+        if ((search ?? '').trim()) {
             const q = search.toLowerCase();
             list = list.filter(p =>
                 p.name.toLowerCase().includes(q) ||
@@ -107,13 +107,13 @@ export default function ProductCatalog({ userName, onNeedAuth, onCartUpdate }) {
                           `${displayed.length} result${displayed.length !== 1 ? 's' : ''}`}
                   </span>
                 <div className="pcat-controls__right">
-                    <input
-                        className="pcat-search"
-                        type="search"
-                        placeholder="Filter products…"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
+                    {/*<input*/}
+                    {/*    className="pcat-search"*/}
+                    {/*    type="search"*/}
+                    {/*    placeholder="Filter products…"*/}
+                    {/*    value={search}*/}
+                    {/*    onChange={e => setSearch(e.target.value)}*/}
+                    {/*/>*/}
                     <select
                         className="pcat-sort"
                         value={sort}
