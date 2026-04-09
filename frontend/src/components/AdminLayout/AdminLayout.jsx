@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import './AdminLayout.css'
 
+
 const NAV_ITEMS = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: '🗂️' },
     { label: 'Products',  path: '/admin/products',  icon: '🛍️' },
@@ -8,7 +9,7 @@ const NAV_ITEMS = [
     { label: 'Users',     path: '/admin/users',     icon: '👥' },
 ]
 
-export default function AdminLayout({ children, userName }) {
+export default function AdminLayout({ children, userName, onLogout }) {
     const navigate = useNavigate()
 
     return (
@@ -54,8 +55,20 @@ export default function AdminLayout({ children, userName }) {
                         <input placeholder="Search anything..." />
                     </div>
                     <div className="al-topbar__right">
-                        <span className="al-topbar__username">{userName ?? 'Admin'}</span>
-                        <span className="al-topbar__role">Superadmin</span>
+                        <button className='al-user-btn'>
+                            <span className='al-user-btn__icon'>👤</span>
+                            <div className="al-user-btn__text">
+                                <span className="al-topbar__username">{userName ?? 'Admin'}</span>
+                                <span className="al-topbar__role">Superadmin</span>
+                            </div>
+                        </button>
+
+                        <div className="al-user-dropdown">
+                            <button className="al-user-dropdown__item" onClick={()=>onLogout()}>
+                                Logout
+                            </button>
+                        </div>
+
                     </div>
                 </header>
 

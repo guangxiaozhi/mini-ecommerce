@@ -188,7 +188,7 @@ function App() {
                 path="/admin/*"
                 element={
                     <RequireAdmin>
-                        <AdminLayout userName={userName}>
+                        <AdminLayout userName={userName} onLogout={handleLogout}>
                             <Routes>
                                 <Route path="dashboard" element={<AdminDashboard />} />
                                 <Route path="products" element={<AdminProductsPage />} />
