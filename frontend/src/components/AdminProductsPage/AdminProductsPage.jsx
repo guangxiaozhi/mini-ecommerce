@@ -6,6 +6,9 @@ import {
     adminUpdateProduct,
     adminAddProductImage,
     adminDeleteProductImage,
+    adminAddProductBullet,
+    adminAddShipping,
+    adminDeleteShipping,
 } from '../../api/adminProducts'
 import './AdminProductsPage.css'
 
@@ -38,6 +41,10 @@ export default function AdminProductsPage() {
     const [imageUrl, setImageUrl] = useState('')
     const [imageIsPrimary, setImageIsPrimary] = useState(false)
     const [imageSaving, setImageSaving] = useState(false)
+    const [bulletForm, setBulletForm] = useState({brand:'', weight:'',dimension:'',content:''})
+    const [bulletSaving, setBulletSaving] = useState(false)
+    const [shippingForm, setShippingForm] = useState({label:'', description:'', isFree:false})
+    const [shippingSaving, setShippingSaving] = useState(false)
 
     const token = useMemo(() => localStorage.getItem('token'), [])
 
@@ -65,6 +72,14 @@ export default function AdminProductsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    useEffect(() => {
+        if (managingImagesFor) {
+            const updated = items.find(p => p.id === managingImagesFor.id)
+            if (updated) setManagingImagesFor(updated)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [items])
+
     function onChange(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }))
     }
@@ -82,6 +97,13 @@ export default function AdminProductsPage() {
         setManagingImagesFor(item)
         setImageUrl('')
         setImageIsPrimary(false)
+        const existingBullet = item.bullets?.[0]
+        setBulletForm({
+            brand: existingBullet?.brand ?? '',
+            weight: existingBullet?.weight ?? '',
+            dimension: existingBullet?.dimension ?? '',
+            content: existingBullet?.content ?? '',
+        })
     }
 
     function cancelEdit() {
@@ -146,11 +168,6 @@ export default function AdminProductsPage() {
             setImageUrl('')
             setImageIsPrimary(false)
             await loadProducts()
-            // refresh managingImagesFor with updated images
-            setManagingImagesFor(prev => ({
-                ...prev,
-                images: items.find(p => p.id === prev.id)?.images ?? prev.images,
-            }))
         } catch (e) {
             setError(e.message || 'Failed to add image')
         } finally {
@@ -163,12 +180,47 @@ export default function AdminProductsPage() {
         try {
             await adminDeleteProductImage(token, managingImagesFor.id, imageId)
             await loadProducts()
-            setManagingImagesFor(prev => ({
-                ...prev,
-                images: prev.images.filter(img => img.id !== imageId),
-            }))
         } catch (e) {
             setError(e.message || 'Failed to delete image')
+        }
+    }
+
+    async function handleAddBullet(e) {
+        e.preventDefault()
+        if (!managingImagesFor) return
+        setBulletSaving(true)
+        try {
+            await adminAddProductBullet(token, managingImagesFor.id, bulletForm)
+            await loadProducts()
+        } catch (e) {
+            setError(e.message || 'Failed to add bullet')
+        } finally {
+            setBulletSaving(false)
+        }
+    }
+
+    async function handleAddShipping(e) {
+        e.preventDefault()
+        if (!managingImagesFor) return
+        setShippingSaving(true)
+        try {
+            await adminAddShipping(token, managingImagesFor.id, shippingForm)
+            setShippingForm({ label: '', description: '', isFree: false })
+            await loadProducts()
+        } catch (e) {
+            setError(e.message || 'Failed to add shipping')
+        } finally {
+            setShippingSaving(false)
+        }
+    }
+
+    async function handleDeleteShipping(shippingId) {
+        if (!window.confirm('Delete this shipping option?')) return
+        try {
+            await adminDeleteShipping(token, managingImagesFor.id, shippingId)
+            await loadProducts()
+        } catch (e) {
+            setError(e.message || 'Failed to delete shipping')
         }
     }
 
@@ -284,6 +336,95 @@ export default function AdminProductsPage() {
                                 <div style={{ marginTop: 12, display:'flex', justifyContent:'center' }}>
                                     <button type="submit" className="ap-btn ap-btn--green" disabled={imageSaving}>
                                         {imageSaving ? 'Adding...' : 'Add'}
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    )}
+                </section>
+            </div>
+
+            {/* Bottom grid: Bullet + Shipping */}
+            <div className="ap-grid" style={{ marginTop: 16 }}>
+
+                {/* Left: Bullet */}
+                <section className="ap-card">
+                    <h2 className="ap-card__title">Bullet</h2>
+                    {!managingImagesFor ? (
+                        <p className="ap-hint">Click "Edit" on a product to manage bullets.</p>
+                    ) : (
+                        <>
+                            <p className="ap-hint"><strong>{managingImagesFor.name}</strong></p>
+                            <form onSubmit={handleAddBullet} className="ap-form">
+                                <div className="ap-form__row">
+                                    <label className="ap-label">Brand
+                                        <input className="ap-input" value={bulletForm.brand} onChange={e => setBulletForm(p => ({ ...p, brand: e.target.value }))} />
+                                    </label>
+                                    <label className="ap-label">Weight
+                                        <input className="ap-input" value={bulletForm.weight} onChange={e => setBulletForm(p => ({ ...p, weight: e.target.value }))} />
+                                    </label>
+                                </div>
+                                <label className="ap-label">Dimension
+                                    <input className="ap-input" value={bulletForm.dimension} onChange={e => setBulletForm(p => ({ ...p, dimension: e.target.value }))} />
+                                </label>
+                                <label className="ap-label">Content
+                                    <textarea className="ap-input" rows={3} value={bulletForm.content} onChange={e => setBulletForm(p => ({ ...p, content: e.target.value }))} placeholder="Bullet point description" />
+                                </label>
+                                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
+                                    <button type="submit" className="ap-btn ap-btn--green" disabled={bulletSaving}>
+                                        {bulletSaving ? 'Saving...' : 'Save'}
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    )}
+                </section>
+
+                {/* Right: Shipping */}
+                <section className="ap-card">
+                    <h2 className="ap-card__title">Shipping Option</h2>
+                    {!managingImagesFor ? (
+                        <p className="ap-hint">Click "Edit" on a product to manage shipping.</p>
+                    ) : (
+                        <>
+                            <p className="ap-hint"><strong>{managingImagesFor.name}</strong></p>
+                            {managingImagesFor.shippingOptions?.length > 0 ? (
+                                <table className="ap-table">
+                                    <thead>
+                                    <tr><th>Label</th><th>Description</th><th>Free</th><th>Action</th></tr>
+                                    </thead>
+                                    <tbody>
+                                    {managingImagesFor.shippingOptions.map(s => (
+                                        <tr key={s.id}>
+                                            <td>{s.label}</td>
+                                            <td>{s.description}</td>
+                                            <td>{s.isFree ? 'Yes' : 'No'}</td>
+                                            <td><button className="ap-btn ap-btn--red-sm" onClick={() =>
+                                                handleDeleteShipping(s.id)}>Delete</button></td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <p className="ap-hint">No shipping options yet.</p>
+                            )}
+                            <form onSubmit={handleAddShipping} className="ap-form" style={{ marginTop: 16 }}>
+                                <label className="ap-label">Support Shipping
+                                    <input className="ap-input" value={shippingForm.label} onChange={e => setShippingForm(p=> ({ ...p, label: e.target.value }))} required />
+
+                                </label>
+                                <label className="ap-label">Shipping Description
+                                    <input className="ap-input" value={shippingForm.description} onChange={e =>
+                                        setShippingForm(p => ({ ...p, description: e.target.value }))} />
+                                </label>
+                                <label className="ap-checkbox">
+                                    <input type="checkbox" checked={shippingForm.isFree} onChange={e => setShippingForm(p =>
+                                        ({ ...p, isFree: e.target.checked }))} />
+                                    Free shipping
+                                </label>
+                                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
+                                    <button type="submit" className="ap-btn ap-btn--green" disabled={shippingSaving}>
+                                        {shippingSaving ? 'Adding...' : 'Add'}
                                     </button>
                                 </div>
                             </form>
