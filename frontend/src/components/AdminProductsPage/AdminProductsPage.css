@@ -23,6 +23,12 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+    align-items: stretch;
+}
+
+.ap-grid > .ap-card {
+    height: 100%;
+    box-sizing: border-box;
 }
 
 /* ── Card ── */
@@ -161,6 +167,14 @@ select.ap-input {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.ap-right-col .ap-card {
+    flex: 1;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 /* ── Bullet sub-section divider ── */
