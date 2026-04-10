@@ -19,6 +19,7 @@ import com.guang.miniecommercebackend.repository.ShippingOptionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -79,6 +80,9 @@ public class ProductService {
     }
     public void deleteProduct(Long id) {
         Product p = getByIdOr404(id);
+        productImageRepository.deleteByProductId(id);      // ← delete images first
+        productBulletRepository.deleteByProductId(id);     // ← delete bullet first
+        shippingOptionRepository.deleteByProductId(id);    // ← delete shipping first
         productRepository.delete(p);
     }
 
@@ -91,6 +95,21 @@ public class ProductService {
         img.setSortOrder(req.getSortOrder() != null ? req.getSortOrder() : 0);
         ProductImage saved = productImageRepository.save(img);
         return new ProductImageResponse(saved.getId(), saved.getImageUrl(), saved.getIsPrimary(), saved.getSortOrder());
+    }
+
+    public  ProductImageResponse updateImage(Long productId, Long imageId, ProductImageRequest req){
+        ProductImage img = productImageRepository.findById(imageId)
+                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "image not found"));
+        if (!img.getProduct().getId().equals(productId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "image doest not belong to this product");
+        }
+        img.setImageUrl(req.getImageUrl());
+        img.setIsPrimary(req.getIsPrimary() != null ? req.getIsPrimary(): false);
+        if (req.getSortOrder() != null){
+            img.setSortOrder(req.getSortOrder());
+        }
+        ProductImage saved = productImageRepository.save(img);
+        return  new ProductImageResponse(saved.getId(), saved.getImageUrl(),saved.getIsPrimary(), saved.getSortOrder());
     }
 
     public void deleteImage(Long productId, Long imageId) {
@@ -126,6 +145,19 @@ public class ProductService {
         ShippingOption saved = shippingOptionRepository.save(shipping);
         return new ShippingOptionResponse(saved.getId(), saved.getLabel(),
                 saved.getDescription(), saved.getIsFree());
+    }
+
+    public ShippingOptionResponse updateShipping(Long productId, Long shippingId, ShippingOptionRequest req) {
+        ShippingOption shipping = shippingOptionRepository.findById(shippingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "shipping option not found"));
+        if (!shipping.getProduct().getId().equals(productId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "shipping does not belong to this product");
+        }
+        shipping.setLabel(req.getLabel());
+        shipping.setDescription(req.getDescription());
+        shipping.setIsFree(req.getIsFree() != null ? req.getIsFree() : false);
+        ShippingOption saved = shippingOptionRepository.save(shipping);
+        return new ShippingOptionResponse(saved.getId(), saved.getLabel(), saved.getDescription(), saved.getIsFree());
     }
 
     public void deleteShipping(Long productId, Long shippingId) {

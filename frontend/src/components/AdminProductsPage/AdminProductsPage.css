@@ -23,6 +23,12 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+    align-items: stretch;
+}
+
+.ap-grid > .ap-card {
+    height: 100%;
+    box-sizing: border-box;
 }
 
 /* ── Card ── */
@@ -92,12 +98,6 @@
     justify-content: center;
 }
 
-.ap-hint {
-    font-size: 13px;
-    color: #888;
-    margin: 0 0 12px;
-}
-
 /* ── Buttons ── */
 .ap-btn {
     width: 100px;
@@ -119,6 +119,10 @@
 .ap-btn--sm     { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e0e0e0; border: none; color:
         #333; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
 .ap-btn--sm:hover { opacity: 0.85; }
+
+.ap-btn--green-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #4caf50; border: none; color:
+        #fff; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
+.ap-btn--green-sm:hover { opacity: 0.85; }
 
 .ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e53935; border: none; color:
         #fff; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
@@ -160,4 +164,50 @@
 
 select.ap-input {
     height: 44px;
+}
+
+/* ── Right column (Images + Shipping stacked) ── */
+.ap-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.ap-right-col .ap-card {
+    flex: 1;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* ── Bullet sub-section divider ── */
+.ap-subsection {
+    border-top: 1px solid #f0f2f8;
+    padding-top: 16px;
+    margin-top: 4px;
+}
+
+.ap-subsection__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 12px;
+}
+
+.ap-input--error {
+    border-color: #e53935;
+}
+
+.ap-field-error {
+    font-size: 11px;
+    color: #e53935;
+    margin-top: 2px;
+}
+
+.ap-submit-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 16px 0;
 }

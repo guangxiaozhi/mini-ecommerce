@@ -75,6 +75,15 @@ export async function adminAddProductImage(token, productId, body) {
     return handleResponse(res)
 }
 
+export async function adminUpdateProductImage(token, productId, imageId, body){
+    const res = await  fetch(`${BASE}/${productId}/images/${imageId}`,{
+        method:'PUT',
+        headers:authHeader(token),
+        body:JSON.stringify(body),
+    })
+    return handleResponse(res)
+}
+
 export async function adminDeleteProductImage(token, productId, imageId) {
     const res = await fetch(`${BASE}/${productId}/images/${imageId}`, {
         method: 'DELETE',
@@ -96,6 +105,15 @@ export async function adminAddProductBullet(token, productId, body) {
 export async function adminAddShipping(token, productId, body) {
     const res = await fetch(`${BASE}/${productId}/shipping`, {
         method: 'POST',
+        headers: authHeader(token),
+        body: JSON.stringify(body),
+    })
+    return handleResponse(res)
+}
+
+export async function adminUpdateShipping(token, productId, shippingId, body) {
+    const res = await fetch(`${BASE}/${productId}/shipping/${shippingId}`, {
+        method: 'PUT',
         headers: authHeader(token),
         body: JSON.stringify(body),
     })

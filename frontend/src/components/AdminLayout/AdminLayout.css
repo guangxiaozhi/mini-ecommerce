@@ -135,3 +135,65 @@
     padding: 24px;
     flex: 1;
 }
+
+.al-topbar__right {
+    position: relative; /* needed so dropdown positions correctly */
+}
+
+.al-user-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 8px;
+    width: 130px;
+}
+
+.al-user-btn:hover {
+    background: #f0f2f8;
+}
+
+.al-user-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100%);
+    right: 0;
+    background: #fff;
+    border: 1px solid #e8eaf0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    z-index: 100;
+}
+
+.al-user-dropdown__item {
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    color: #e53935;
+    border-radius: 8px;
+}
+
+.al-user-dropdown__item:hover {
+    background: #fdecea;
+}
+
+.al-topbar__right:hover .al-user-dropdown {
+    display: block;
+}
+.al-user-btn__icon {
+    font-size: 20px;
+}
+
+.al-user-btn__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
