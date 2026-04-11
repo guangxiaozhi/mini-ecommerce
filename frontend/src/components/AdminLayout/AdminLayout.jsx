@@ -50,10 +50,6 @@ export default function AdminLayout({ children, userName, onLogout }) {
 
                 {/* Top bar */}
                 <header className="al-topbar">
-                    <div className="al-topbar__search">
-                        <span>🔍</span>
-                        <input placeholder="Search anything..." />
-                    </div>
                     <div className="al-topbar__right">
                         <button className='al-user-btn'>
                             <span className='al-user-btn__icon'>👤</span>
