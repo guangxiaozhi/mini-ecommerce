@@ -134,6 +134,10 @@
 .al-content {
     padding: 24px;
     flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .al-topbar__right {

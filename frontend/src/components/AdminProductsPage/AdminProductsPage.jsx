@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
     adminCreateProduct,
     adminDeleteProduct,
@@ -53,6 +53,17 @@ export default function AdminProductsPage() {
     const [bulletErrors, setBulletErrors] = useState({})
     const [imageErrors, setImageErrors] = useState({})
     const [shippingErrors, setShippingErrors] = useState({})
+
+    const [leftWidth, setLeftWidth] = useState(50)
+    const [isDragging, setIsDragging] = useState(false)
+    const [topHeight, setTopHeight] = useState(50)
+    const [isHDragging, setIsHDragging] = useState(false)
+    const [topWinHeight, setTopWinHeight] = useState(60)
+    const [isWinDragging, setIsWinDragging] = useState(false)
+    const gridRef = useRef(null)
+    const rightColRef = useRef(null)
+    const windowsRef = useRef(null)
+    const dragState = useRef(null)
 
     const token = useMemo(() => localStorage.getItem('token'), [])
 
@@ -409,18 +420,110 @@ export default function AdminProductsPage() {
         }
     }
 
+    function handleDividerMouseDown(e) {
+        e.preventDefault()
+        dragState.current = {
+            startX: e.clientX,
+            startWidth: leftWidth,
+            gridWidth: gridRef.current.offsetWidth,
+        }
+        setIsDragging(true)
+
+        function onMouseMove(e) {
+            const { startX, startWidth, gridWidth } = dragState.current
+            const dx = e.clientX - startX
+            const newWidth = Math.min(75, Math.max(25, startWidth + (dx / gridWidth) * 100))
+            setLeftWidth(newWidth)
+        }
+
+        function onMouseUp() {
+            setIsDragging(false)
+            document.removeEventListener('mousemove', onMouseMove)
+            document.removeEventListener('mouseup', onMouseUp)
+        }
+
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+    }
+
+    function handleHDividerMouseDown(e) {
+        e.preventDefault()
+        dragState.current = {
+            startY: e.clientY,
+            startHeight: topHeight,
+            colHeight: rightColRef.current.offsetHeight,
+        }
+        setIsHDragging(true)
+
+        function onMouseMove(e) {
+            const { startY, startHeight, colHeight } = dragState.current
+            const dy = e.clientY - startY
+            const newHeight = Math.min(80, Math.max(20, startHeight + (dy / colHeight) * 100))
+            setTopHeight(newHeight)
+        }
+
+        function onMouseUp() {
+            setIsHDragging(false)
+            document.removeEventListener('mousemove', onMouseMove)
+            document.removeEventListener('mouseup', onMouseUp)
+        }
+
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+    }
+
+    function handleWinDividerMouseDown(e) {
+        e.preventDefault()
+        dragState.current = {
+            startY: e.clientY,
+            startHeight: topWinHeight,
+            wrapperHeight: windowsRef.current.offsetHeight,
+        }
+        setIsWinDragging(true)
+
+        function onMouseMove(e) {
+            const { startY, startHeight, wrapperHeight } = dragState.current
+            const dy = e.clientY - startY
+            const newHeight = Math.min(85, Math.max(15, startHeight + (dy / wrapperHeight) * 100))
+            setTopWinHeight(newHeight)
+        }
+
+        function onMouseUp() {
+            setIsWinDragging(false)
+            document.removeEventListener('mousemove', onMouseMove)
+            document.removeEventListener('mouseup', onMouseUp)
+        }
+
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+    }
+
+    const anyDragging = isDragging || isHDragging || isWinDragging
+
     return (
-        <div className="ap-page">
+        <div className="ap-page" style={anyDragging ? { userSelect: 'none' } : undefined}>
+            {anyDragging && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 9999,
+                    cursor: isDragging ? 'col-resize' : 'row-resize',
+                }} />
+            )}
             <h1 className="ap-title">Products</h1>
             {error && <div className="ap-error">{error}</div>}
 
-            <div className="ap-grid">
+            <div ref={windowsRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+
+            <div className="ap-editor-window" style={{ flex: `0 0 ${topWinHeight}%`, minHeight: 0 }}>
+            <h2 className="ap-editor-window__title">
+                {editingId == null ? 'Add Product' : `Edit Product #${editingId}`}
+            </h2>
+            <div className="ap-grid" ref={gridRef}>
 
                 {/* Left: Products + Bullet in one card */}
-                <section className="ap-card">
-                    <h2 className="ap-card__title">
-                        {editingId == null ? 'Products' : `Edit Product #${editingId}`}
-                    </h2>
+                <section className="ap-card" style={{ flex: `0 0 ${leftWidth}%` }}>
+                    <h2 className="ap-card__title">Product Details</h2>
                     <form className="ap-form" >
                         <div className="ap-form__row">
                             <label className="ap-label">
@@ -518,11 +621,17 @@ export default function AdminProductsPage() {
                     </form>
                 </section>
 
+                {/* Draggable divider */}
+                <div
+                    className={`ap-divider${isDragging ? ' ap-divider--dragging' : ''}`}
+                    onMouseDown={handleDividerMouseDown}
+                />
+
                 {/* Right: Images + Shipping stacked */}
-                <div className="ap-right-col">
+                <div className="ap-right-col" style={{ flex: 1 }} ref={rightColRef}>
 
                     {/* Images */}
-                    <section className="ap-card">
+                    <section className="ap-right-section" style={{ flex: `0 0 ${topHeight}%` }}>
                         <h2 className="ap-card__title">Images</h2>
                         {managingImagesFor?.images?.length > 0 && (
                             <table className="ap-table" style={{ marginBottom: 16 }}>
@@ -575,8 +684,14 @@ export default function AdminProductsPage() {
                         </form>
                     </section>
 
+                    {/* Horizontal draggable divider */}
+                    <div
+                        className={`ap-h-divider${isHDragging ? ' ap-h-divider--dragging' : ''}`}
+                        onMouseDown={handleHDividerMouseDown}
+                    />
+
                     {/* Shipping */}
-                    <section className="ap-card">
+                    <section className="ap-right-section" style={{ flex: 1 }}>
                         <h2 className="ap-card__title">Shipping Option</h2>
                         {managingImagesFor?.shippingOptions?.length > 0 && (
                             <table className="ap-table" style={{ marginBottom: 16 }}>
@@ -645,45 +760,56 @@ export default function AdminProductsPage() {
                         Cancel
                     </button>
                 )}
-            </div>
+            </div>{/* end ap-submit-row */}
+            </div>{/* end top ap-editor-window */}
+
+            {/* Window drag divider */}
+            <div
+                className={`ap-win-divider${isWinDragging ? ' ap-win-divider--dragging' : ''}`}
+                onMouseDown={handleWinDividerMouseDown}
+            />
 
             {/* Products table */}
-            <section className="ap-card" style={{ marginTop: 16 }}>
-                <h2 className="ap-card__title">Products</h2>
-                {loading ? (
-                    <p>Loading...</p>
-                ) : items.length === 0 ? (
-                    <p>No products</p>
-                ) : (
-                    <table className="ap-table ap-table--full">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Active</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {items.map(p => (
-                            <tr key={p.id}>
-                                <td>{p.id}</td>
-                                <td>{p.name}</td>
-                                <td>{p.price}</td>
-                                <td>{p.stock}</td>
-                                <td>{String(p.active)}</td>
-                                <td className="ap-table__actions">
-                                    <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>Edit</button>
-                                    <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>Delete</button>
-                                </td>
+            <div className="ap-editor-window" style={{ flex: 1, minHeight: 0 }}>
+                <h2 className="ap-editor-window__title">Products</h2>
+                <section className="ap-card">
+                    {loading ? (
+                        <p>Loading...</p>
+                    ) : items.length === 0 ? (
+                        <p>No products</p>
+                    ) : (
+                        <table className="ap-table ap-table--full">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Active</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                )}
-            </section>
+                            </thead>
+                            <tbody>
+                            {items.map(p => (
+                                <tr key={p.id}>
+                                    <td>{p.id}</td>
+                                    <td>{p.name}</td>
+                                    <td>{p.price}</td>
+                                    <td>{p.stock}</td>
+                                    <td>{String(p.active)}</td>
+                                    <td className="ap-table__actions">
+                                        <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>Edit</button>
+                                        <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>Delete</button>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    )}
+                </section>
+            </div>{/* end bottom ap-editor-window */}
+
+            </div>{/* end windowsRef wrapper */}
         </div>
     )
 }

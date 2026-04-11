@@ -1,5 +1,8 @@
 .ap-page {
     padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .ap-title {
@@ -18,17 +21,58 @@
     border-radius: 6px;
 }
 
+/* ── Editor window ── */
+.ap-editor-window {
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.ap-win-divider {
+    flex-shrink: 0;
+    height: 10px;
+    cursor: row-resize;
+    background: transparent;
+    border-radius: 4px;
+    transition: background 0.15s;
+    margin: 3px 0;
+}
+.ap-win-divider:hover, .ap-win-divider--dragging {
+    background: #4caf50;
+}
+
+.ap-editor-window__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
+}
+
 /* ── 2-column grid ── */
 .ap-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    display: flex;
     align-items: stretch;
+    gap: 0;
+}
+
+.ap-divider {
+    flex: 0 0 8px;
+    cursor: col-resize;
+    background: transparent;
+    border-radius: 4px;
+    transition: background 0.15s;
+    margin: 0 4px;
+}
+.ap-divider:hover, .ap-divider--dragging {
+    background: #4caf50;
 }
 
 .ap-grid > .ap-card {
-    height: 100%;
     box-sizing: border-box;
+    align-self: stretch;
 }
 
 /* ── Card ── */
@@ -170,15 +214,31 @@ select.ap-input {
 .ap-right-col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    height: 100%;
+    gap: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    box-sizing: border-box;
+    overflow: hidden;
+    align-self: stretch;
+}
+
+.ap-right-section {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px;
     box-sizing: border-box;
 }
 
-.ap-right-col .ap-card {
-    flex: 1;
-    overflow-y: auto;
-    box-sizing: border-box;
+.ap-h-divider {
+    flex: 0 0 8px;
+    cursor: row-resize;
+    background: #f0f2f8;
+    transition: background 0.15s;
+}
+.ap-h-divider:hover, .ap-h-divider--dragging {
+    background: #4caf50;
 }
 
 /* ── Bullet sub-section divider ── */
@@ -209,5 +269,5 @@ select.ap-input {
     display: flex;
     gap: 16px;
     justify-content: center;
-    margin: 16px 0;
+    margin-top: 16px;
 }
