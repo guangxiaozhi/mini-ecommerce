@@ -21,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class OrderService {
@@ -52,9 +54,30 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cart is empty");
         }
 
-        // 先统一校验库存（与 CartService.validateStock 同思路）
+//        // 先统一校验库存（与 CartService.validateStock 同思路）
+//        for (CartItem item : cart.getItems()){
+//            validateStock(item.getProduct(), item.getQuantity());
+//        }
+
+        //替换上面的一段，这里先锁商品，然后再校验
+        //  1) 收集 id 并排序
+        java.util.List<Long> productIds = cart.getItems().stream()
+                .map(ci -> ci.getProduct().getId())
+                .distinct()
+                .sorted()
+                .toList();
+        //  2）对每个id findByIdForUpdate, 放进 Map
+        Map<Long, Product> lockedById = new HashMap<>();
+        for (Long productId : productIds) {
+            Product p = productRepository.findByIdForUpdate(productId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
+            lockedById.put(productId, p);
+        }
+        //  3) 用 Map里的Product 做库存校验
         for (CartItem item : cart.getItems()){
-            validateStock(item.getProduct(), item.getQuantity());
+            Long pid = item.getProduct().getId();
+            Product p = lockedById.get(pid);
+            validateStock(p, item.getQuantity());
         }
 
         //组装 Order / OrderItem
@@ -64,7 +87,8 @@ public class OrderService {
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (CartItem cartItem : cart.getItems()){
-            Product product = cartItem.getProduct();
+            Long pid = cartItem.getProduct().getId();
+            Product product = lockedById.get(pid);
             BigDecimal unitPrice = product.getPrice();
             int quantity = cartItem.getQuantity();
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
@@ -85,7 +109,8 @@ public class OrderService {
 
         // 下单成功后扣减库存（与校验在同一事务里，避免只下单不扣库存）
         for (CartItem cartItem : cart.getItems()){
-            Product product = cartItem.getProduct();
+            Long pid = cartItem.getProduct().getId();
+            Product product = lockedById.get(pid);
             product.setStock(product.getStock() - cartItem.getQuantity());
             productRepository.save(product);
         }
