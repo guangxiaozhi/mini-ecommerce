@@ -34,6 +34,7 @@ function toPayload(form) {
 
 export default function AdminProductsPage() {
     const [items, setItems] = useState([])
+    const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -53,18 +54,18 @@ export default function AdminProductsPage() {
     const [bulletErrors, setBulletErrors] = useState({})
     const [imageErrors, setImageErrors] = useState({})
     const [shippingErrors, setShippingErrors] = useState({})
-
     const [leftWidth, setLeftWidth] = useState(50)
     const [isDragging, setIsDragging] = useState(false)
     const [topHeight, setTopHeight] = useState(50)
     const [isHDragging, setIsHDragging] = useState(false)
-    const [topWinHeight, setTopWinHeight] = useState(60)
-    const [isWinDragging, setIsWinDragging] = useState(false)
     const gridRef = useRef(null)
     const rightColRef = useRef(null)
-    const windowsRef = useRef(null)
     const dragState = useRef(null)
 
+    const filteredItems = items.filter(p=>
+        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(p.id).includes(searchTerm)
+    )
     const token = useMemo(() => localStorage.getItem('token'), [])
 
     async function loadProducts() {
@@ -472,53 +473,21 @@ export default function AdminProductsPage() {
         document.addEventListener('mouseup', onMouseUp)
     }
 
-    function handleWinDividerMouseDown(e) {
-        e.preventDefault()
-        dragState.current = {
-            startY: e.clientY,
-            startHeight: topWinHeight,
-            wrapperHeight: windowsRef.current.offsetHeight,
-        }
-        setIsWinDragging(true)
-
-        function onMouseMove(e) {
-            const { startY, startHeight, wrapperHeight } = dragState.current
-            const dy = e.clientY - startY
-            const newHeight = Math.min(85, Math.max(15, startHeight + (dy / wrapperHeight) * 100))
-            setTopWinHeight(newHeight)
-        }
-
-        function onMouseUp() {
-            setIsWinDragging(false)
-            document.removeEventListener('mousemove', onMouseMove)
-            document.removeEventListener('mouseup', onMouseUp)
-        }
-
-        document.addEventListener('mousemove', onMouseMove)
-        document.addEventListener('mouseup', onMouseUp)
-    }
-
-    const anyDragging = isDragging || isHDragging || isWinDragging
-
     return (
-        <div className="ap-page" style={anyDragging ? { userSelect: 'none' } : undefined}>
-            {anyDragging && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 9999,
-                    cursor: isDragging ? 'col-resize' : 'row-resize',
-                }} />
-            )}
+        <div className="ap-page">
             <h1 className="ap-title">Products</h1>
             {error && <div className="ap-error">{error}</div>}
 
-            <div ref={windowsRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-
-            <div className="ap-editor-window" style={{ flex: `0 0 ${topWinHeight}%`, minHeight: 0 }}>
-            <h2 className="ap-editor-window__title">
-                {editingId == null ? 'Add Product' : `Edit Product #${editingId}`}
-            </h2>
+            <div className="ap-editor-window">
+            <div className="ap-search-bar">
+                <span className="ap-search-bar__icon">🔍</span>
+                <input
+                    className="ap-search-bar__input"
+                    placeholder="Search by name or ID"
+                    value={searchTerm}
+                    onChange={e=>setSearchTerm(e.target.value)}
+                />
+            </div>
             <div className="ap-grid" ref={gridRef}>
 
                 {/* Left: Products + Bullet in one card */}
@@ -650,8 +619,8 @@ export default function AdminProductsPage() {
                                         <td className="ap-table__url">{img.imageUrl}</td>
                                         <td>{img.isPrimary ? 'Yes' : 'No'}</td>
                                         <td>
-                                            <button className="ap-btn--green-sm" onClick={()=>startEditImage(img)}>Edit</button>
-                                            <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteImage(img.id)}>Delete</button>
+                                            <button className="ap-btn--green-sm ap-btn--narrow" onClick={()=>startEditImage(img)}>✏️</button>
+                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteImage(img.id)}>🗑️</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -705,8 +674,8 @@ export default function AdminProductsPage() {
                                         <td>{s.description}</td>
                                         <td>{s.isFree ? 'Yes' : 'No'}</td>
                                         <td>
-                                            <button className="ap-btn--green-sm" onClick={() => startEditShipping(s)}>Edit</button>
-                                            <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteShipping(s.id)}>Delete</button>
+                                            <button className="ap-btn--green-sm ap-btn--narrow" onClick={() => startEditShipping(s)}>✏️</button>
+                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteShipping(s.id)}>🗑️</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -763,14 +732,8 @@ export default function AdminProductsPage() {
             </div>{/* end ap-submit-row */}
             </div>{/* end top ap-editor-window */}
 
-            {/* Window drag divider */}
-            <div
-                className={`ap-win-divider${isWinDragging ? ' ap-win-divider--dragging' : ''}`}
-                onMouseDown={handleWinDividerMouseDown}
-            />
-
             {/* Products table */}
-            <div className="ap-editor-window" style={{ flex: 1, minHeight: 0 }}>
+            <div className="ap-editor-window" style={{ marginTop: 16 }}>
                 <h2 className="ap-editor-window__title">Products</h2>
                 <section className="ap-card">
                     {loading ? (
@@ -790,7 +753,7 @@ export default function AdminProductsPage() {
                             </tr>
                             </thead>
                             <tbody>
-                            {items.map(p => (
+                            {filteredItems.map(p => (
                                 <tr key={p.id}>
                                     <td>{p.id}</td>
                                     <td>{p.name}</td>
@@ -798,8 +761,8 @@ export default function AdminProductsPage() {
                                     <td>{p.stock}</td>
                                     <td>{String(p.active)}</td>
                                     <td className="ap-table__actions">
-                                        <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>Edit</button>
-                                        <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>Delete</button>
+                                        <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>✏️</button>
+                                        <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>🗑️</button>
                                     </td>
                                 </tr>
                             ))}
@@ -808,8 +771,6 @@ export default function AdminProductsPage() {
                     )}
                 </section>
             </div>{/* end bottom ap-editor-window */}
-
-            </div>{/* end windowsRef wrapper */}
         </div>
     )
 }

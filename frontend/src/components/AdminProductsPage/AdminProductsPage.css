@@ -1,8 +1,5 @@
 .ap-page {
     padding: 0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
 }
 
 .ap-title {
@@ -27,21 +24,6 @@
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    min-height: 0;
-    overflow-y: auto;
-}
-
-.ap-win-divider {
-    flex-shrink: 0;
-    height: 10px;
-    cursor: row-resize;
-    background: transparent;
-    border-radius: 4px;
-    transition: background 0.15s;
-    margin: 3px 0;
-}
-.ap-win-divider:hover, .ap-win-divider--dragging {
-    background: #4caf50;
 }
 
 .ap-editor-window__title {
@@ -157,20 +139,22 @@
 .ap-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .ap-btn:hover:not(:disabled) { opacity: 0.85; }
 
-.ap-btn--green  { background: #4caf50; color: #fff; }
-.ap-btn--grey   { background: #e0e0e0; color: #333; }
+.ap-btn--green  { background: transparent; color: #5c6bc0; border: 1.5px solid #5c6bc0; }
+.ap-btn--grey   { background: transparent; color: #5c6bc0; border: 1.5px solid #5c6bc0; }
 
-.ap-btn--sm     { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e0e0e0; border: none; color:
-        #333; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
-.ap-btn--sm:hover { opacity: 0.85; }
+.ap-btn--sm     { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: transparent; border: 1.5px solid #5c6bc0; color:
+        #5c6bc0; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: all 0.15s; }
+.ap-btn--sm:hover { background: #5c6bc0; color: #fff; }
 
-.ap-btn--green-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #4caf50; border: none; color:
-        #fff; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
-.ap-btn--green-sm:hover { opacity: 0.85; }
+.ap-btn--green-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: transparent; border: 1.5px solid #5c6bc0; color:
+        #5c6bc0; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: all 0.15s; }
+.ap-btn--green-sm:hover { background: #5c6bc0; color: #fff; }
 
-.ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e53935; border: none; color:
-        #fff; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
-.ap-btn--red-sm:hover { opacity: 0.85; }
+.ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: transparent; border: 1.5px solid #5c6bc0; color:
+        #5c6bc0; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+.ap-btn--red-sm:hover { background: #5c6bc0; color: #fff; }
+
+.ap-btn--narrow { width: 44px; }
 
 /* ── Table ── */
 .ap-table {
@@ -270,4 +254,29 @@ select.ap-input {
     gap: 16px;
     justify-content: center;
     margin-top: 16px;
+}
+
+.ap-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+}
+
+.ap-search-bar__icon {
+    font-size: 16px;
+    color: #999;
+}
+
+.ap-search-bar__input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #555;
+    background: none;
+    width: 100%;
 }
