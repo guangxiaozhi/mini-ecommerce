@@ -61,7 +61,7 @@
 }
 
 .al-nav__item--active {
-    background: #ebebf8;
+    background: #f0f2f8;
     color: #5c6bc0;
     font-weight: 600;
 }
@@ -92,7 +92,7 @@
     border-bottom: 1px solid #e8eaf0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 0 24px;
     flex-shrink: 0;
 }

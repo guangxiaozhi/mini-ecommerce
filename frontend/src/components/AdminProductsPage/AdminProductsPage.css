@@ -18,17 +18,43 @@
     border-radius: 6px;
 }
 
+/* ── Editor window ── */
+.ap-editor-window {
+    background: #f5f7fa;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.ap-editor-window__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
+}
+
 /* ── 2-column grid ── */
 .ap-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    display: flex;
     align-items: stretch;
+    gap: 0;
+}
+
+.ap-divider {
+    flex: 0 0 8px;
+    cursor: col-resize;
+    background: transparent;
+    border-radius: 4px;
+    transition: background 0.15s;
+    margin: 0 4px;
+}
+.ap-divider:hover, .ap-divider--dragging {
+    background: #4caf50;
 }
 
 .ap-grid > .ap-card {
-    height: 100%;
     box-sizing: border-box;
+    align-self: stretch;
 }
 
 /* ── Card ── */
@@ -113,20 +139,22 @@
 .ap-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .ap-btn:hover:not(:disabled) { opacity: 0.85; }
 
-.ap-btn--green  { background: #4caf50; color: #fff; }
-.ap-btn--grey   { background: #e0e0e0; color: #333; }
+.ap-btn--green  { background: transparent; color: #5c6bc0; border: 1.5px solid #5c6bc0; }
+.ap-btn--grey   { background: transparent; color: #5c6bc0; border: 1.5px solid #5c6bc0; }
 
-.ap-btn--sm     { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e0e0e0; border: none; color:
-        #333; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
-.ap-btn--sm:hover { opacity: 0.85; }
+.ap-btn--sm     { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: transparent; border: 1.5px solid #5c6bc0; color:
+        #5c6bc0; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: all 0.15s; }
+.ap-btn--sm:hover { background: #5c6bc0; color: #fff; }
 
-.ap-btn--green-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #4caf50; border: none; color:
-        #fff; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
-.ap-btn--green-sm:hover { opacity: 0.85; }
+.ap-btn--green-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: transparent; border: 1.5px solid #5c6bc0; color:
+        #5c6bc0; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: all 0.15s; }
+.ap-btn--green-sm:hover { background: #5c6bc0; color: #fff; }
 
-.ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e53935; border: none; color:
-        #fff; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
-.ap-btn--red-sm:hover { opacity: 0.85; }
+.ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: transparent; border: 1.5px solid #5c6bc0; color:
+        #5c6bc0; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+.ap-btn--red-sm:hover { background: #5c6bc0; color: #fff; }
+
+.ap-btn--narrow { width: 44px; }
 
 /* ── Table ── */
 .ap-table {
@@ -153,7 +181,7 @@
 
 .ap-table__url {
     font-size: 11px;
-    max-width: 200px;
+    max-width: 300px;
     word-break: break-all;
     color: #555;
 }
@@ -170,21 +198,37 @@ select.ap-input {
 .ap-right-col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    height: 100%;
+    gap: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    box-sizing: border-box;
+    overflow: hidden;
+    align-self: stretch;
+}
+
+.ap-right-section {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px;
     box-sizing: border-box;
 }
 
-.ap-right-col .ap-card {
-    flex: 1;
-    overflow-y: auto;
-    box-sizing: border-box;
+.ap-h-divider {
+    flex: 0 0 8px;
+    cursor: row-resize;
+    background: #f0f2f8;
+    transition: background 0.15s;
+}
+.ap-h-divider:hover, .ap-h-divider--dragging {
+    background: #4caf50;
 }
 
 /* ── Bullet sub-section divider ── */
 .ap-subsection {
     border-top: 1px solid #f0f2f8;
-    padding-top: 16px;
+    padding-top: 10px;
     margin-top: 4px;
 }
 
@@ -209,5 +253,30 @@ select.ap-input {
     display: flex;
     gap: 16px;
     justify-content: center;
-    margin: 16px 0;
+    margin-top: 16px;
+}
+
+.ap-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+}
+
+.ap-search-bar__icon {
+    font-size: 16px;
+    color: #999;
+}
+
+.ap-search-bar__input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #555;
+    background: none;
+    width: 100%;
 }

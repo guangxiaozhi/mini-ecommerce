@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
     adminCreateProduct,
     adminDeleteProduct,
@@ -34,6 +34,7 @@ function toPayload(form) {
 
 export default function AdminProductsPage() {
     const [items, setItems] = useState([])
+    const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -53,7 +54,18 @@ export default function AdminProductsPage() {
     const [bulletErrors, setBulletErrors] = useState({})
     const [imageErrors, setImageErrors] = useState({})
     const [shippingErrors, setShippingErrors] = useState({})
+    const [leftWidth, setLeftWidth] = useState(45)
+    const [isDragging, setIsDragging] = useState(false)
+    const [topHeight, setTopHeight] = useState(50)
+    const [isHDragging, setIsHDragging] = useState(false)
+    const gridRef = useRef(null)
+    const rightColRef = useRef(null)
+    const dragState = useRef(null)
 
+    const filteredItems = items.filter(p=>
+        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(p.id).includes(searchTerm)
+    )
     const token = useMemo(() => localStorage.getItem('token'), [])
 
     async function loadProducts() {
@@ -298,8 +310,33 @@ export default function AdminProductsPage() {
         const errors = validateImage()
         if (Object.keys(errors).length > 0) { setImageErrors(errors); return }
         setImageErrors({})
+
+        //Warn if setting primary when another primary already exists
+        if (imageIsPrimary){
+            const existingPrimary = managingImagesFor?.images?.find(
+                img => img.isPrimary && img.id !== editingImageId
+            )
+            if(existingPrimary){
+                const ok = window.confirm('There is already a primary image. Set this one as primary instead?')
+                if (!ok) return
+            }
+        }
+
         setImageSaving(true)
         try {
+            //If setting as primary, demote the existing primary first
+            if(imageIsPrimary){
+                const  existingPrimary = managingImagesFor?.images?.find(
+                    img => img.isPrimary && img.id !== editingImageId
+                )
+                if(existingPrimary){
+                    await  adminUpdateProductImage(token,managingImagesFor.id, existingPrimary.id,{
+                        imageUrl:existingPrimary.imageUrl,
+                        isPrimary: false,
+                    })
+                }
+            }
+
             if (editingImageId){
                 await  adminUpdateProductImage(token, managingImagesFor.id, editingImageId, {
                     imageUrl:imageUrl.trim(),
@@ -384,18 +421,78 @@ export default function AdminProductsPage() {
         }
     }
 
+    function handleDividerMouseDown(e) {
+        e.preventDefault()
+        dragState.current = {
+            startX: e.clientX,
+            startWidth: leftWidth,
+            gridWidth: gridRef.current.offsetWidth,
+        }
+        setIsDragging(true)
+
+        function onMouseMove(e) {
+            const { startX, startWidth, gridWidth } = dragState.current
+            const dx = e.clientX - startX
+            const newWidth = Math.min(75, Math.max(25, startWidth + (dx / gridWidth) * 100))
+            setLeftWidth(newWidth)
+        }
+
+        function onMouseUp() {
+            setIsDragging(false)
+            document.removeEventListener('mousemove', onMouseMove)
+            document.removeEventListener('mouseup', onMouseUp)
+        }
+
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+    }
+
+    function handleHDividerMouseDown(e) {
+        e.preventDefault()
+        dragState.current = {
+            startY: e.clientY,
+            startHeight: topHeight,
+            colHeight: rightColRef.current.offsetHeight,
+        }
+        setIsHDragging(true)
+
+        function onMouseMove(e) {
+            const { startY, startHeight, colHeight } = dragState.current
+            const dy = e.clientY - startY
+            const newHeight = Math.min(80, Math.max(20, startHeight + (dy / colHeight) * 100))
+            setTopHeight(newHeight)
+        }
+
+        function onMouseUp() {
+            setIsHDragging(false)
+            document.removeEventListener('mousemove', onMouseMove)
+            document.removeEventListener('mouseup', onMouseUp)
+        }
+
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+    }
+
     return (
         <div className="ap-page">
             <h1 className="ap-title">Products</h1>
             {error && <div className="ap-error">{error}</div>}
 
-            <div className="ap-grid">
+            <div className="ap-editor-window">
+            <div className="ap-search-bar">
+                <span className="ap-search-bar__icon">🔍</span>
+                <input
+                    className="ap-search-bar__input"
+                    placeholder="Search by name or ID"
+                    value={searchTerm}
+                    onChange={e=>setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className="ap-grid" ref={gridRef}>
 
                 {/* Left: Products + Bullet in one card */}
-                <section className="ap-card">
-                    <h2 className="ap-card__title">
-                        {editingId == null ? 'Products' : `Edit Product #${editingId}`}
-                    </h2>
+                <section className="ap-card" style={{ flex: `0 0 ${leftWidth}%` }}>
+                    <h2 className="ap-card__title">Product Details</h2>
                     <form className="ap-form" >
                         <div className="ap-form__row">
                             <label className="ap-label">
@@ -437,7 +534,7 @@ export default function AdminProductsPage() {
                         </div>
                         <label className="ap-label">
                             Description
-                            <textarea className="ap-input" rows={4}
+                            <textarea className="ap-input" rows={3}
                                       value={form.description}
                                       onChange={e => {onChange('description', e.target.value)
                                           if (formErrors.description) setFormErrors(p => ({ ...p, description: '' }))
@@ -493,11 +590,17 @@ export default function AdminProductsPage() {
                     </form>
                 </section>
 
+                {/* Draggable divider */}
+                <div
+                    className={`ap-divider${isDragging ? ' ap-divider--dragging' : ''}`}
+                    onMouseDown={handleDividerMouseDown}
+                />
+
                 {/* Right: Images + Shipping stacked */}
-                <div className="ap-right-col">
+                <div className="ap-right-col" style={{ flex: 1 }} ref={rightColRef}>
 
                     {/* Images */}
-                    <section className="ap-card">
+                    <section className="ap-right-section" style={{ flex: `0 0 ${topHeight}%` }}>
                         <h2 className="ap-card__title">Images</h2>
                         {managingImagesFor?.images?.length > 0 && (
                             <table className="ap-table" style={{ marginBottom: 16 }}>
@@ -516,8 +619,8 @@ export default function AdminProductsPage() {
                                         <td className="ap-table__url">{img.imageUrl}</td>
                                         <td>{img.isPrimary ? 'Yes' : 'No'}</td>
                                         <td>
-                                            <button className="ap-btn--green-sm" onClick={()=>startEditImage(img)}>Edit</button>
-                                            <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteImage(img.id)}>Delete</button>
+                                            <button className="ap-btn--green-sm ap-btn--narrow" onClick={()=>startEditImage(img)}>✏️</button>
+                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteImage(img.id)}>🗑️</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -550,8 +653,14 @@ export default function AdminProductsPage() {
                         </form>
                     </section>
 
+                    {/* Horizontal draggable divider */}
+                    <div
+                        className={`ap-h-divider${isHDragging ? ' ap-h-divider--dragging' : ''}`}
+                        onMouseDown={handleHDividerMouseDown}
+                    />
+
                     {/* Shipping */}
-                    <section className="ap-card">
+                    <section className="ap-right-section" style={{ flex: 1 }}>
                         <h2 className="ap-card__title">Shipping Option</h2>
                         {managingImagesFor?.shippingOptions?.length > 0 && (
                             <table className="ap-table" style={{ marginBottom: 16 }}>
@@ -565,8 +674,8 @@ export default function AdminProductsPage() {
                                         <td>{s.description}</td>
                                         <td>{s.isFree ? 'Yes' : 'No'}</td>
                                         <td>
-                                            <button className="ap-btn--green-sm" onClick={() => startEditShipping(s)}>Edit</button>
-                                            <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteShipping(s.id)}>Delete</button>
+                                            <button className="ap-btn--green-sm ap-btn--narrow" onClick={() => startEditShipping(s)}>✏️</button>
+                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteShipping(s.id)}>🗑️</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -620,45 +729,48 @@ export default function AdminProductsPage() {
                         Cancel
                     </button>
                 )}
-            </div>
+            </div>{/* end ap-submit-row */}
+            </div>{/* end top ap-editor-window */}
 
             {/* Products table */}
-            <section className="ap-card" style={{ marginTop: 16 }}>
-                <h2 className="ap-card__title">Products</h2>
-                {loading ? (
-                    <p>Loading...</p>
-                ) : items.length === 0 ? (
-                    <p>No products</p>
-                ) : (
-                    <table className="ap-table ap-table--full">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Active</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {items.map(p => (
-                            <tr key={p.id}>
-                                <td>{p.id}</td>
-                                <td>{p.name}</td>
-                                <td>{p.price}</td>
-                                <td>{p.stock}</td>
-                                <td>{String(p.active)}</td>
-                                <td className="ap-table__actions">
-                                    <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>Edit</button>
-                                    <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>Delete</button>
-                                </td>
+            <div className="ap-editor-window" style={{ marginTop: 16 }}>
+                <h2 className="ap-editor-window__title">Products</h2>
+                <section className="ap-card">
+                    {loading ? (
+                        <p>Loading...</p>
+                    ) : items.length === 0 ? (
+                        <p>No products</p>
+                    ) : (
+                        <table className="ap-table ap-table--full">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Active</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                )}
-            </section>
+                            </thead>
+                            <tbody>
+                            {filteredItems.map(p => (
+                                <tr key={p.id}>
+                                    <td>{p.id}</td>
+                                    <td>{p.name}</td>
+                                    <td>{p.price}</td>
+                                    <td>{p.stock}</td>
+                                    <td>{String(p.active)}</td>
+                                    <td className="ap-table__actions">
+                                        <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>✏️</button>
+                                        <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>🗑️</button>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    )}
+                </section>
+            </div>{/* end bottom ap-editor-window */}
         </div>
     )
 }
