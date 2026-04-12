@@ -29,9 +29,11 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
     const [loading, setLoading] = useState(true);
     const [showToast, setShowToast] = useState(false)
     const [error, setError] = useState(null);
-
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [showFullView, setShowFullView] = useState(false);
 
     useEffect(() => {
+        setSelectedImage(null)
         getProduct(id)
             .then(setProduct)
             .catch(() => setError('Product not found.'))
@@ -50,6 +52,10 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
 
     // pick primary image, fallback to first image
     const primaryImage = product.images?.find(img => img.isPrimary) ?? product.images?.[0];
+    const sortedImages = product.images
+        ?[...product.images].sort((a,b)=>(a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+        : [];
+    const displayImage = selectedImage ?? primaryImage;
 
     return (
         <div className="pd-page">
@@ -57,14 +63,47 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
 
                 {/* LEFT — image */}
                 <div className="pd-col-left">
-                    <div className="pd-image" style={!primaryImage ? { background: color.bg } : {}}>
-                        {primaryImage
-                            ? <img src={primaryImage.imageUrl} alt={product.name} className="pd-image__img" />
-                            : <span className="pd-image__initial" style={{ color: color.text }}>
-                                  {product.name.charAt(0).toUpperCase()}
-                                </span>
-                        }
-                    </div>
+                    {primaryImage ? (
+                        <div className="pd-image-section">
+
+                            {/* Thumbnail strip — only shown when >1 image */}
+                            {sortedImages.length > 1 && (
+                                <div className="pd-thumbnails">
+                                    {sortedImages.slice(0, 5).map(img => (
+                                        <button
+                                            key={img.id}
+                                            className={`pd-thumb ${displayImage?.id === img.id ? 'pd-thumb--active' : ''}`}
+                                            onMouseEnter={() => setSelectedImage(img)}
+                                        >
+                                            <img src={img.imageUrl} alt="" />
+                                        </button>
+                                    ))}
+                                    {sortedImages.length > 5 && (
+                                        <button className="pd-thumb pd-thumb--more" onClick={() => setShowFullView(true)}>
+                                            {sortedImages.length - 5}+
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Main image + full view button */}
+                            <div className="pd-image-main">
+                                <div className="pd-image">
+                                    <img src={displayImage.imageUrl} alt={product.name} className="pd-image__img" />
+                                </div>
+                                <button className="pd-fullview-btn" onClick={() => setShowFullView(true)}>
+                                    Click to see full view
+                                </button>
+                            </div>
+
+                        </div>
+                    ) : (
+                        <div className="pd-image" style={{ background: color.bg }}>
+                            <span className="pd-image__initial" style={{ color: color.text }}>
+                                {product.name.charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* MIDDLE — product info */}
@@ -153,6 +192,41 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
             {showToast && (
                 <div className="pd-toast">
                     <span className="pd-toast__check">✓</span>Item added to cart!
+                </div>
+            )}
+            {showFullView && displayImage && (
+                <div className="pd-modal" onClick={() => setShowFullView(false)}>
+                    <div className="pd-modal__content" onClick={e => e.stopPropagation()}>
+                        <button className="pd-modal__close" onClick={() => setShowFullView(false)}>✕</button>
+
+                        <div className="pd-modal__body">
+
+                            {/* Left — selected image */}
+                            <div className="pd-modal__left">
+                                <img src={displayImage.imageUrl} alt={product.name} className="pd-modal__img" />
+                            </div>
+
+                            {/* Right — description + thumbnails */}
+                            <div className="pd-modal__right">
+                                <div className="pd-modal__info">
+                                    <h2 className="pd-modal__name">{product.name}</h2>
+                                    <p className="pd-modal__desc">{product.description}</p>
+                                </div>
+                                <div className="pd-modal__thumbs">
+                                    {sortedImages.map(img => (
+                                        <button
+                                            key={img.id}
+                                            className={`pd-thumb ${displayImage?.id === img.id ? 'pd-thumb--active' : ''}`}
+                                            onClick={() => setSelectedImage(img)}
+                                        >
+                                            <img src={img.imageUrl} alt="" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
