@@ -42,15 +42,18 @@ export default function OrderListPage({onNeedAuth, userName}){
         )
     }
 
-
-
     if(loading) return <div>loading</div>
     if (error) return <div>{error}</div>
 
     return (
         <ul>
             {orders.map(o =>(
-                <li key={o.id}>#{o.id} — {o.totalAmount} — {o.status}</li>
+                <li key={o.id}>
+                    <Link to={`/orders/${o.id}`}>
+                        # {o.id} — {o.totalAmount} — {o.status}
+                    </Link>
+
+                </li>
             ))}
         </ul>
     )
