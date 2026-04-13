@@ -191,7 +191,14 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                     )}
                 </div>
 
-                <button type="button" className="site-header__returns" aria-label="退货与订单">
+                <button type="button" className="site-header__returns" aria-label="Returns and orders" onClick={() =>{
+                    if(userName) {
+                        navigate('/orders')
+                    } else {
+                        sessionStorage.setItem('postLoginRedirect', '/orders')
+                        onOpenAuth?.()
+                    }
+                }}>
                     <span className="site-header__returns-line1">Returns</span>
                     <span className="site-header__returns-line2">& Orders</span>
                 </button>

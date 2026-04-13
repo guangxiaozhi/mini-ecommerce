@@ -15,6 +15,8 @@ import AdminLayout from "./components/AdminLayout/AdminLayout.jsx";
 import AdminDashboard from "./components/AdminDashboard/AdminDashboard.jsx";
 import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx";
 import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx";
+import OrderListPage from "./components/OrderListPage/OrderListPage.jsx";
+import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx";
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -57,6 +59,12 @@ function App() {
     }
 
     loadCartCount()
+
+    const path = sessionStorage.getItem('postLoginRedirect')
+    if (path){
+        navigate(path,{replace: true})
+    }
+    sessionStorage.removeItem('postLoginRedirect')
   }
 
   function handleLogout(){
@@ -75,6 +83,9 @@ function App() {
           navigate('/', { replace: true })
       }
       if (location.pathname.startsWith('/products/')){
+          navigate('/',{replace:true})
+      }
+      if (location.pathname.startsWith('/orders')){
           navigate('/',{replace:true})
       }
   }
@@ -211,6 +222,29 @@ function App() {
                     userName={userName}
                 />
             }
+            />
+
+            <Route
+                path='/orders'
+                element={
+                <OrderListPage
+                    onNeedAuth={() => {
+                        setMsg('')
+                        setAuthOpen(true)
+                    }}
+                    userName={userName}
+                />}
+            />
+            <Route
+                path='/orders/:orderId'
+                element={
+                <OrderDetailPage
+                    onNeedAuth={() => {
+                        setMsg('')
+                        setAuthOpen(true)
+                    }}
+                    userName={userName}
+                />}
             />
         </Routes>
 

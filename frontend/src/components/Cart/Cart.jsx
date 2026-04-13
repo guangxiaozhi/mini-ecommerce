@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getCart, updateCartItem, removeCartItem, clearCart } from '../../api/cart'
+import { checkout } from '../../api/orders.js'
 import './Cart.css'
 
 const COLORS = [
@@ -34,6 +35,8 @@ export default function Cart({ onCartUpdate, onNeedAuth, userName }) {
     const [loading, setLoading] = useState(true)
     const [error,   setError]   = useState(null)
     const [busy,    setBusy]    = useState(new Set())
+    const [checkoutBusy, setCheckoutBusy] = useState(false)
+    const navigate = useNavigate()
 
     const totalItems    = items.reduce((sum, i) => sum + i.quantity, 0)
     const orderSubtotal = items.reduce((sum, i) => sum + i.subtotal, 0)
@@ -108,6 +111,24 @@ export default function Cart({ onCartUpdate, onNeedAuth, userName }) {
         }
     }
 
+    async function handleCheckout(){
+        if(!token){
+            onNeedAuth?.()
+            return
+        }
+        setCheckoutBusy(true)
+        setError(null)
+        try{
+            const order = await checkout(token)
+            setItems([])
+            onCartUpdate(0)
+            navigate(`/orders/${order.id}`)
+        }catch{
+            setError(e.message ?? 'Checkout failed')
+        }finally {
+            setCheckoutBusy(false)
+        }
+    }
     // ── No token ──
     if (!token) {
         return (
@@ -237,8 +258,8 @@ export default function Cart({ onCartUpdate, onNeedAuth, userName }) {
                             <span>Order Total</span>
                             <span>${orderSubtotal.toFixed(2)}</span>
                         </div>
-                        <button className="cart-summary__checkout" disabled>
-                            Proceed to Checkout
+                        <button className="cart-summary__checkout" onClick={handleCheckout}>
+                            {checkoutBusy ? 'Processing...' : 'Proceed to Checkout'}
                         </button>
                         <Link to="/" className="cart-summary__continue">
                             ← Continue Shopping
