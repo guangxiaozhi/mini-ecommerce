@@ -59,6 +59,12 @@ function App() {
     }
 
     loadCartCount()
+
+    const path = sessionStorage.getItem('postLoginRedirect')
+    if (path){
+        navigate(path,{replace: true})
+    }
+    sessionStorage.removeItem('postLoginRedirect')
   }
 
   function handleLogout(){
@@ -79,7 +85,7 @@ function App() {
       if (location.pathname.startsWith('/products/')){
           navigate('/',{replace:true})
       }
-      if (location.pathname.startsWith('/orders/')){
+      if (location.pathname.startsWith('/orders')){
           navigate('/',{replace:true})
       }
   }
