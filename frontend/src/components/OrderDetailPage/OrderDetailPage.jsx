@@ -1,35 +1,54 @@
 // 对应 /orders/:orderId（单条订单详情，显示单条订单及 items。）
 
-import {Link, useParams} from 'react-router-dom'
-import { useState, useEffect} from "react";
-import { getOrder} from "../../api/orders.js";
+import { Link, useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { getOrder } from '../../api/orders.js'
+import './OrderDetailPage.css'
 
-export default function OrderDetailPage({onNeedAuth, userName}){
-    // 上面两行也可以替代第三行
-    // const params = useParams()
-    // const orderId = params.orderId
-    const {orderId} = useParams()
+function formatMoney(n) {
+    if (n == null) return '—'
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(n))
+}
+
+function formatDate(iso) {
+    if (!iso) return '—'
+    try {
+        return new Date(iso).toLocaleString()
+    } catch {
+        return String(iso)
+    }
+}
+
+function statusClass(status) {
+    const s = String(status || '').toUpperCase()
+    if (s === 'PAID') return 'order-detail__badge order-detail__badge--paid'
+    if (s === 'CANCELLED') return 'order-detail__badge order-detail__badge--cancelled'
+    return 'order-detail__badge order-detail__badge--pending'
+}
+
+export default function OrderDetailPage({ onNeedAuth, userName }) {
+    const { orderId } = useParams()
     const [order, setOrder] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const token = localStorage.getItem('token')
 
-    async function loadOrder(orderId){
-        if(!token){
-            setOrder([])
+    async function loadOrder(id) {
+        if (!token) {
+            setOrder(null)
             setLoading(false)
             return
         }
-        if(!orderId){
+        if (!id) {
             setLoading(false)
             return
         }
         setLoading(true)
         setError(null)
-        try{
-            const currentOrder = await getOrder(token, orderId)
+        try {
+            const currentOrder = await getOrder(token, id)
             setOrder(currentOrder)
-        } catch(e){
+        } catch (e) {
             setError(e.message ?? 'Failed to load the order')
         } finally {
             setLoading(false)
@@ -38,45 +57,130 @@ export default function OrderDetailPage({onNeedAuth, userName}){
 
     useEffect(() => {
         loadOrder(orderId)
-    }, [orderId, userName]);
+    }, [orderId, userName])
 
-
-    // ── No token ──
-    if (!token){
+    if (!token) {
         return (
-            <div>
-                <p>Please sign in to view your orders.</p>
-                <button onClick={onNeedAuth}>Sign In</button>
-                <Link to="/">← Continue Shopping</Link>
+            <div className="order-detail-page">
+                <div className="order-detail-auth">
+                    <p className="order-detail-auth__msg">Please sign in to view this order.</p>
+                    <button type="button" className="order-detail-auth__btn" onClick={onNeedAuth}>
+                        Sign In
+                    </button>
+                    <Link to="/" className="order-detail-auth__link">
+                        ← Continue Shopping
+                    </Link>
+                </div>
             </div>
-
         )
     }
 
-    if(loading) return <div>loading</div>
-    if (error) return <div>{error}</div>
+    if (loading) {
+        return (
+            <div className="order-detail-page">
+                <div className="order-detail-skeleton">
+                    <div className="order-detail-skeleton__shimmer order-detail-skeleton__title" />
+                    <div className="order-detail-skeleton__grid">
+                        <div className="order-detail-skeleton__shimmer order-detail-skeleton__line" />
+                        <div className="order-detail-skeleton__shimmer order-detail-skeleton__line" />
+                    </div>
+                    <div className="order-detail-skeleton__shimmer order-detail-skeleton__block" />
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="order-detail-page">
+                <Link to="/orders" className="order-detail__back">
+                    ← Your orders
+                </Link>
+                <div className="order-detail-error" role="alert">
+                    {error}
+                </div>
+            </div>
+        )
+    }
+
+    if (!order) {
+        return (
+            <div className="order-detail-page">
+                <Link to="/orders" className="order-detail__back">
+                    ← Your orders
+                </Link>
+                <p className="order-detail-notfound">Order not found.</p>
+            </div>
+        )
+    }
+
+    const items = order.items ?? []
 
     return (
-        <div className="order-detail">
-            <h1>订单详情</h1>
-            <dl>
-                <dt>订单号</dt>
-                <dd>{order.id}</dd>
-                <dt>总金额</dt>
-                <dd>{order.totalAmount}</dd>
-                <dt>状态</dt>
-                <dd>{order.status}</dd>
-                <dt>下单时间</dt>
-                <dd>{order.createdAt}</dd>
-            </dl>
-            <h2>商品明细</h2>
-            <ul>
-                {(order.items ?? []).map((line) => (
-                    <li key={line.productId}>
-                        {line.productName} × {line.quantity} — 单价 {line.unitPrice} — 小计 {line.subtotal}
-                    </li>
-                ))}
-            </ul>
+        <div className="order-detail-page">
+            <Link to="/orders" className="order-detail__back">
+                ← Your orders
+            </Link>
+
+            <header className="order-detail__header">
+                <div>
+                    <h1 className="order-detail__title">Order #{order.id}</h1>
+                    <p className="order-detail__placed">Placed on {formatDate(order.createdAt)}</p>
+                </div>
+                <span className={statusClass(order.status)}>{order.status}</span>
+            </header>
+
+            <section className="order-detail-summary" aria-labelledby="order-summary-heading">
+                <h2 id="order-summary-heading" className="order-detail-summary__title">
+                    Order summary
+                </h2>
+                <dl className="order-detail-summary__dl">
+                    <div className="order-detail-summary__row">
+                        <dt>Order total</dt>
+                        <dd>{formatMoney(order.totalAmount)}</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section className="order-detail-items" aria-labelledby="order-items-heading">
+                <h2 id="order-items-heading" className="order-detail-items__title">
+                    Items ({items.length})
+                </h2>
+                {items.length === 0 ? (
+                    <p className="order-detail-items__empty">No line items for this order.</p>
+                ) : (
+                    <div className="order-detail-table-wrap">
+                        <table className="order-detail-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Product</th>
+                                    <th scope="col" className="order-detail-table__num">
+                                        Unit price
+                                    </th>
+                                    <th scope="col" className="order-detail-table__num">
+                                        Qty
+                                    </th>
+                                    <th scope="col" className="order-detail-table__num">
+                                        Subtotal
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {items.map((line) => (
+                                    <tr key={`${line.productId}-${line.productName}`}>
+                                        <td className="order-detail-table__name">{line.productName}</td>
+                                        <td className="order-detail-table__num">{formatMoney(line.unitPrice)}</td>
+                                        <td className="order-detail-table__num">{line.quantity}</td>
+                                        <td className="order-detail-table__num order-detail-table__subtotal">
+                                            {formatMoney(line.subtotal)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
         </div>
     )
 }

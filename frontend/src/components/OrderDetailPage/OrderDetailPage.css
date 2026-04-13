@@ -1,0 +1,297 @@
+/*订单详情 OrderDetailPage*/
+/*OrderDetailPage.css：← Your orders 返回链接、标题区 + 状态徽章、订单摘要卡片、响应式表格（商品名、单价、数量、小计）。*/
+/*无 token / 加载 / 错误 / 找不到订单 各状态都有对应 UI。*/
+/*                         loadOrder 使用路由里的 orderId，无 token 时不再把 order 设成数组。*/
+
+.order-detail-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+}
+
+.order-detail__back {
+    display: inline-block;
+    margin-bottom: 1.25rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #c7511f;
+    text-decoration: none;
+}
+
+.order-detail__back:hover {
+    color: #9a3412;
+    text-decoration: underline;
+}
+
+.order-detail__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.order-detail__title {
+    margin: 0 0 0.35rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.order-detail__placed {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #6b7280;
+}
+
+.order-detail__badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    align-self: flex-start;
+}
+
+.order-detail__badge--pending {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.order-detail__badge--paid {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.order-detail__badge--cancelled {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+}
+
+/* Summary */
+.order-detail-summary {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.15rem 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.order-detail-summary__title {
+    margin: 0 0 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.order-detail-summary__dl {
+    margin: 0;
+}
+
+.order-detail-summary__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.order-detail-summary__row dt {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.order-detail-summary__row dd {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #111;
+}
+
+/* Items table */
+.order-detail-items__title {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.order-detail-items__empty {
+    margin: 0;
+    padding: 1.5rem;
+    text-align: center;
+    color: #6b7280;
+    background: #fafafa;
+    border: 1px dashed #e5e7eb;
+    border-radius: 12px;
+}
+
+.order-detail-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.order-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.order-detail-table thead {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.order-detail-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    font-weight: 700;
+}
+
+.order-detail-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+}
+
+.order-detail-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.order-detail-table__name {
+    font-weight: 600;
+    color: #111;
+}
+
+.order-detail-table__num {
+    text-align: right;
+    white-space: nowrap;
+    color: #374151;
+}
+
+.order-detail-table__subtotal {
+    font-weight: 600;
+    color: #111;
+}
+
+/* Auth */
+.order-detail-auth {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(180deg, #fafafa 0%, #fff 100%);
+    border: 1px solid #eee;
+    border-radius: 12px;
+}
+
+.order-detail-auth__msg {
+    margin: 0 0 1.25rem;
+    font-size: 1.05rem;
+    color: #374151;
+}
+
+.order-detail-auth__btn {
+    display: inline-block;
+    padding: 0.55rem 1.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111;
+    background: linear-gradient(180deg, #ffd814, #f7ca00);
+    border: 1px solid #fcd200;
+    border-radius: 999px;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.order-detail-auth__btn:hover {
+    background: linear-gradient(180deg, #ffe75c, #f0c400);
+}
+
+.order-detail-auth__link {
+    display: block;
+    color: #2563eb;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.order-detail-auth__link:hover {
+    text-decoration: underline;
+}
+
+/* Error & not found */
+.order-detail-error {
+    padding: 0.85rem 1rem;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #c4121e;
+    border-radius: 8px;
+    color: #b91c1c;
+    font-size: 0.95rem;
+}
+
+.order-detail-notfound {
+    margin: 0;
+    padding: 1.5rem;
+    text-align: center;
+    color: #6b7280;
+    background: #fafafa;
+    border-radius: 12px;
+}
+
+/* Skeleton */
+.order-detail-skeleton__shimmer {
+    border-radius: 8px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: order-detail-shimmer 1.3s ease-in-out infinite;
+}
+
+.order-detail-skeleton__title {
+    height: 32px;
+    width: 45%;
+    margin-bottom: 1.25rem;
+}
+
+.order-detail-skeleton__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.order-detail-skeleton__line {
+    height: 48px;
+}
+
+.order-detail-skeleton__block {
+    height: 180px;
+}
+
+@keyframes order-detail-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@media (max-width: 520px) {
+    .order-detail__header {
+        flex-direction: column;
+    }
+}
