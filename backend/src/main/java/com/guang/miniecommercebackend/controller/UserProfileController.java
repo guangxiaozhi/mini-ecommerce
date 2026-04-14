@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.guang.miniecommercebackend.dto.ChangePasswordRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import jakarta.validation.Valid;
 import java.util.Map;
 @RestController
 @RequestMapping("/api/user/profile")
@@ -42,7 +43,7 @@ public class UserProfileController {
 
     /* PUT /api/user/profile   */
     @PutMapping
-    public Map<String, String> updateProfile(UserProfileRequest req) {
+    public Map<String, String> updateProfile(@Valid @RequestBody UserProfileRequest req) {
         User user = currentUser();
 
         if (req.getEmail() != null && !req.getEmail().equals(user.getEmail())) {
@@ -65,7 +66,7 @@ public class UserProfileController {
 
     /** PUT /api/user/profile/password */
     @PutMapping("/password")
-    public Map<String, String> changePassword(@RequestBody ChangePasswordRequest req) {
+    public Map<String, String> changePassword(@Valid @RequestBody ChangePasswordRequest req) {
         User user = currentUser();
 
         if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPasswordHash())) {

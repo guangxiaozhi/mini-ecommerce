@@ -1,12 +1,35 @@
 package com.guang.miniecommercebackend.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
+
 public class UserAddressRequest {
+
+    @NotBlank(message = "Receiver name is required")
+    @Size(max = 50, message = "Receiver name must not exceed 50 characters")
     private String receiverName;
+
+    @NotBlank(message = "Receiver phone is required")
+    @Size(max = 20, message = "Receiver phone must not exceed 20 characters")
+    @Pattern(regexp = "^[0-9+\\-() ]*$", message = "Phone number contains invalid characters")
     private String receiverPhone;
+
+    @NotBlank(message = "State is required")
+    @Size(max = 50, message = "State must not exceed 50 characters")
     private String state;
+
+    @NotBlank(message = "City is required")
+    @Size(max = 50, message = "City name must not exceed 50 characters")
     private String city;
+
+    @Size(max = 50, message = "District must not exceed 50 characters")
     private String district;
+
+    @NotBlank(message = "Detail address is required")
+    @Size(max = 200, message = "Detail address must not exceed 200 characters")
     private String detailAddress;
+
     private Boolean isDefault = false;
 
     public String getReceiverName() { return receiverName; }

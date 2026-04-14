@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -48,7 +49,7 @@ public class UserAddressController {
 
     /** POST /api/user/addresses */
     @PostMapping
-    public ResponseEntity<UserAddressResponse> add(@RequestBody UserAddressRequest req) {
+    public ResponseEntity<UserAddressResponse> add(@Valid @RequestBody UserAddressRequest req) {
         User user = currentUser();
 
         // if new address is default, clear existing default
@@ -72,7 +73,7 @@ public class UserAddressController {
 
     /** PUT /api/user/addresses/{id} */
     @PutMapping("/{id}")
-    public UserAddressResponse update(@PathVariable Long id, @RequestBody UserAddressRequest req) {
+    public UserAddressResponse update(@PathVariable Long id, @Valid @RequestBody UserAddressRequest req) {
         User user = currentUser();
         UserAddress address = addressRepository.findById(id)
                 .filter(a -> a.getUser().getId().equals(user.getId()))

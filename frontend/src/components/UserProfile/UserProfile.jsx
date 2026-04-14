@@ -188,6 +188,24 @@ function AddressSection() {
 
     async function save() {
         setSaving(true); setError('');
+        if(!form.receiverName.trim()) {
+            setError('Receiver name is required');
+            setSaving(false); return;
+        }
+        if(!form.receiverPhone.trim()){
+            setError("Receiver phone is required");
+            setSaving(false);
+            return;
+        }
+        if (!/^[0-9+\-()\s]*$/.test(form.receiverPhone)){
+            setError('Phone number contains invalid characters');
+            setSaving(false);
+            return;
+        }
+        if (!form.state.trim())          { setError('State is required');            setSaving(false); return; }
+        if (!form.city.trim())           { setError('City is required');             setSaving(false); return; }
+        if (!form.detailAddress.trim())  { setError('Detail address is required');   setSaving(false); return; }
+
         try {
             if (editing) {
                 const updated = await updateAddress(token, editing.id, form);
@@ -328,6 +346,18 @@ function EmailSection() {
     async function save() {
         setSaving(true); setError(''); setSuccess('');
         try {
+            if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+                setError('Invalid email format');
+                return;
+            }
+            if (form.phone && form.phone.length > 20) {
+                setError('Phone number must not exceed 20 characters');
+                return;
+            }
+            if (form.phone && !/^[0-9+\-()\s]*$/.test(form.phone)) {
+                setError('Phone number contains invalid characters');
+                return;
+            }
             const updated = await updateProfile(token, form);
             setForm({ email: updated.email || '', phone: updated.phone || '' });
             setSuccess('Saved successfully.');
@@ -339,7 +369,7 @@ function EmailSection() {
         <div>
             <button onClick={toggle} className="profile-links__item"
                     style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
-                <span className="profile-links__label">Email &amp; notifications</span>
+                <span className="profile-links__label">Email &amp; Phone</span>
                 <span className="profile-links__hint">{open ? '▲' : '▼'}</span>
             </button>
 
