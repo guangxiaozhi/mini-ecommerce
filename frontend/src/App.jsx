@@ -21,6 +21,9 @@ function App() {
   const [authOpen, setAuthOpen] = useState(false)
   const [userName, setUserName] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userRole, setUserRole] = useState('')
+  const [userPermissions, setUserPermissions] = useState([])
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [cartCount, setCartCount] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
@@ -47,8 +50,13 @@ function App() {
     const t = localStorage.getItem('token')
     if (t) {
         getMe(t)
-            .then((data) => { setIsAdmin(data?.isAdmin === true) })
-            .catch(() => setIsAdmin(false))
+            .then((data) => {
+                setIsAdmin(data?.isAdmin === true)
+                setUserRole(String(data?.authorities ?? '').split(',')[0] || '')
+                setUserPermissions(data?.permissions ?? [])
+                setIsSuperAdmin(data?.isSuperAdmin === true)
+            })
+            .catch(() => { setIsAdmin(false); setUserRole(''); setUserPermissions([]); setIsSuperAdmin(false) })
     } else {
         setIsAdmin(false)
     }
@@ -61,6 +69,9 @@ function App() {
       localStorage.removeItem('username')
       setUserName(null)
       setIsAdmin(false)
+      setUserRole('')
+      setUserPermissions([])
+      setIsSuperAdmin(false)
       loadCartCount()
       if(location.pathname === '/profile'){
           navigate('/', {replace:true})
@@ -101,6 +112,9 @@ function App() {
                 if (data && data.username != null) {
                     setUserName(data.username)
                     setIsAdmin(data.isAdmin === true)
+                    setUserRole(String(data.authorities ?? '').split(',')[0] || '')
+                    setUserPermissions(data.permissions ?? [])
+                    setIsSuperAdmin(data.isSuperAdmin === true)
                     loadCartCount()
                 } else {
                     setUserName(null)
@@ -184,12 +198,12 @@ function App() {
                 path="/admin/*"
                 element={
                     <RequireAdmin>
-                        <AdminLayout userName={userName} onLogout={handleLogout}>
+                        <AdminLayout userName={userName} userRole={userRole} userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} onLogout={handleLogout}>
                             <Routes>
                                 <Route path="dashboard" element={<AdminDashboard />} />
                                 <Route path="products" element={<AdminProductsPage />} />
                                 <Route path="orders" element={<AdminOrdersPage />} />
-                                <Route path="users" element={<AdminUsersPage />} />
+                                <Route path="users" element={<AdminUsersPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
                             </Routes>
                         </AdminLayout>
                     </RequireAdmin>

@@ -1,11 +1,13 @@
 package com.guang.miniecommercebackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class RoleResponse {
     private Long id;
     private String roleName;
     private String description;
+    @JsonProperty("isAdminRole")
     private boolean isAdminRole;
     private int userCount;
     private List<UserSummaryResponse> users;

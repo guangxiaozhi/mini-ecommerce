@@ -21,32 +21,32 @@ public class AdminProductController {
         this.productService = productService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_BROWSE'))")
     @GetMapping
     public List<ProductResponse> listAll() {
         return productService.listAllProductsForAdmin();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_BROWSE'))")
     @GetMapping("/{id}")
     public ProductResponse getOne(@PathVariable Long id) {
         return productService.getProductForAdmin(id);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_CREATE'))")
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductUpsertRequest req) {
         ProductResponse created = productService.createProduct(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @PutMapping("/{id}")
     public ProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductUpsertRequest req) {
         return productService.updateProduct(id, req);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_DELETE'))")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         productService.deleteProduct(id);

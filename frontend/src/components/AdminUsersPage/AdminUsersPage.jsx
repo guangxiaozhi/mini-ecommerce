@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    adminListUsers, adminCreateUser, adminUpdateUser, adminDeleteUser,
+    adminListUsers, adminUpdateUser, adminDeleteUser,
     adminBlacklistUser, adminUnblacklistUser,
-    adminGetAddresses, adminGetLoginLogs, adminGetBlacklistHistory,
-    adminGetOperationLogs, adminGetAllOperationLogs, adminGetAllLoginLogs,
+    adminGetAddresses, adminGetLoginLogs,
+    adminGetAllOperationLogs, adminGetAllLoginLogs,
     adminListRoles, adminCreateRole, adminUpdateRole, adminDeleteRole,
     adminAddUserToRole, adminRemoveUserFromRole,
     adminAddPermissionToRole, adminRemovePermissionFromRole,
@@ -114,11 +114,11 @@ const PERMISSION_CONFIG = [
         { code: 'ORDER_MANAGE',   label: 'Manage' },
     ]},
     { resource: 'Users', items: [
-        { code: 'USER_VIEW',      label: 'View' },
-        { code: 'USER_CREATE',    label: 'Create' },
-        { code: 'USER_EDIT',      label: 'Edit' },
-        { code: 'USER_DELETE',    label: 'Delete' },
-        { code: 'USER_BLACKLIST', label: 'Blacklist' },
+        { code: 'USER_ADMIN_DETAIL',   label: 'Admin User Detail' },
+        { code: 'USER_REGULAR_DETAIL', label: 'Regular User Detail' },
+        { code: 'USER_ROLES',          label: 'Roles & Permissions' },
+        { code: 'USER_OPERATION_LOG',  label: 'Operation Log' },
+        { code: 'USER_BLACKLIST',      label: 'Blacklist' },
     ]},
     { resource: 'Profile', items: [
         { code: 'PROFILE_VIEW', label: 'View' },
@@ -132,15 +132,30 @@ const PERMISSION_CONFIG = [
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 const TOP_TABS = ['User Detail', 'Roles & Permissions', 'Operation Log', 'Blacklist'];
+const TAB_PERMISSIONS = {
+    'User Detail':         ['USER_ADMIN_DETAIL', 'USER_REGULAR_DETAIL'],
+    'Roles & Permissions': ['USER_ROLES'],
+    'Operation Log':       ['USER_OPERATION_LOG'],
+    'Blacklist':           ['USER_BLACKLIST'],
+};
 
-export default function AdminUsersPage() {
+export default function AdminUsersPage({ userPermissions = [], isSuperAdmin = false }) {
     const token = localStorage.getItem('token');
-    const [topTab, setTopTab] = useState('User Detail');
+    const visibleTabs = TOP_TABS.filter(t =>
+        isSuperAdmin || TAB_PERMISSIONS[t].some(p => userPermissions.includes(p))
+    );
+    const [topTab, setTopTab] = useState(() => visibleTabs[0] || TOP_TABS[0]);
+
+    useEffect(() => {
+        if (visibleTabs.length > 0 && !visibleTabs.includes(topTab)) {
+            setTopTab(visibleTabs[0]);
+        }
+    }, [userPermissions.join(','), isSuperAdmin]);
 
     return (
         <div className="aup-root">
             <div className="aup-top-tabs">
-                {TOP_TABS.map(t => (
+                {visibleTabs.map(t => (
                     <button key={t}
                         className={`aup-top-tab ${topTab === t ? 'aup-top-tab--active' : ''}`}
                         onClick={() => setTopTab(t)}>
@@ -149,7 +164,7 @@ export default function AdminUsersPage() {
                 ))}
             </div>
             <div className="aup-top-content">
-                {topTab === 'User Detail'          && <UserDetailSection token={token} />}
+                {topTab === 'User Detail'          && <UserDetailSection token={token} userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />}
                 {topTab === 'Roles & Permissions'  && <RolesPermissionsSection token={token} />}
                 {topTab === 'Operation Log'        && <OperationLogSection token={token} />}
                 {topTab === 'Blacklist'            && <BlacklistSection token={token} />}
@@ -162,9 +177,35 @@ export default function AdminUsersPage() {
 // TAB 1 — User Detail
 // ══════════════════════════════════════════════════════════════════════════════
 
-const EMPTY_FORM = { username: '', email: '', phone: '', password: '', roleName: 'ROLE_USER', status: 'ACTIVE', banReason: '' };
+function UsersTable({ users, selected, onSelect, emptyMessage = 'No users found.' }) {
+    if (users.length === 0) return <div className="aup-placeholder" style={{ padding: '20px 40px' }}>{emptyMessage}</div>;
+    return (
+        <table className="aup-table">
+            <thead><tr>
+                <th>ID</th><th>Username</th><th>Email</th>
+                <th>Roles</th><th>Status</th><th>Joined</th>
+            </tr></thead>
+            <tbody>
+            {users.map(u => (
+                <tr key={u.id}
+                    className={`aup-row ${selected?.id === u.id ? 'aup-row--active' : ''}`}
+                    onClick={() => onSelect(u)}>
+                    <td className="aup-cell--muted">{u.id}</td>
+                    <td><strong>{u.username}</strong></td>
+                    <td className="aup-cell--muted">{u.email || '—'}</td>
+                    <td>{(u.roles || []).map(r => <RoleBadge key={r} role={r} />)}</td>
+                    <td><StatusBadge status={u.status} /></td>
+                    <td className="aup-cell--muted">
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                    </td>
+                </tr>
+            ))}
+            </tbody>
+        </table>
+    );
+}
 
-function UserDetailSection({ token }) {
+function UserDetailSection({ token, userPermissions = [], isSuperAdmin = false }) {
     const [users, setUsers]             = useState([]);
     const [loading, setLoading]         = useState(false);
     const [listError, setListError]     = useState('');
@@ -185,7 +226,7 @@ function UserDetailSection({ token }) {
     const [allRoles, setAllRoles]   = useState([]);
     const [userModal, setUserModal] = useState(false);
     const [editing, setEditing]   = useState(null);
-    const [form, setForm]         = useState(EMPTY_FORM);
+    const [form, setForm]         = useState({ email: '', phone: '', password: '', roleName: 'ROLE_USER', status: 'ACTIVE', banReason: '' });
     const [formError, setFormError] = useState('');
     const [saving, setSaving]     = useState(false);
 
@@ -229,43 +270,35 @@ function UserDetailSection({ token }) {
         }
     }
 
-    async function unblacklist() {
-        setSaving(true);
-        try { patchUser(await adminUnblacklistUser(token, selected.id)); }
-        catch { } finally { setSaving(false); }
-    }
-
-    function openCreate() { setEditing(null); setForm(EMPTY_FORM); setFormError(''); setUserModal(true); }
     function openEdit(user) {
         setEditing(user);
-        setForm({ username: user.username, email: user.email || '', phone: user.phone || '',
-            password: '', roleName: (user.roles?.[0] || 'ROLE_USER'), status: user.status });
+        setForm({ email: user.email || '', phone: user.phone || '',
+            password: '', roleName: (user.roles?.[0] || 'ROLE_USER'), status: user.status, banReason: '' });
         setFormError(''); setUserModal(true);
     }
     async function submitUserForm() {
         setFormError('');
-        if (!editing && !form.username.trim()) { setFormError('Username is required'); return; }
-        if (!editing && !form.password.trim()) { setFormError('Password is required'); return; }
         if (!form.roleName) { setFormError('Select a role'); return; }
-        const transitioningToBanned = editing && form.status === 'BANNED' && editing.status !== 'BANNED';
+        if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setFormError('Invalid email format'); return; }
+        if (form.phone && form.phone.length > 20) { setFormError('Phone number must not exceed 20 characters'); return; }
+        if (form.phone && !/^[0-9+\-()\s]*$/.test(form.phone)) { setFormError('Phone number contains invalid characters'); return; }
+        if (form.password && form.password.length < 6) { setFormError('New password must be at least 6 characters'); return; }
+        const transitioningToBanned   = form.status === 'BANNED' && editing.status !== 'BANNED';
+        const transitioningFromBanned = editing.status === 'BANNED' && form.status !== 'BANNED';
         if (transitioningToBanned && !form.banReason.trim()) { setFormError('Please provide a reason for banning'); return; }
         setSaving(true);
         try {
             const body = { email: form.email || null, phone: form.phone || null, roleNames: [form.roleName] };
-            if (!editing) { body.username = form.username.trim(); body.password = form.password; body.status = form.status; }
-            if (editing && form.password) body.password = form.password;
-            if (editing && !transitioningToBanned) body.status = form.status;
+            if (form.password) body.password = form.password;
+            if (!transitioningToBanned && !transitioningFromBanned) body.status = form.status;
 
-            if (editing) {
-                const updated = await adminUpdateUser(token, editing.id, body);
-                if (transitioningToBanned) {
-                    patchUser(await adminBlacklistUser(token, editing.id, form.banReason.trim()));
-                } else {
-                    patchUser(updated);
-                }
+            const updated = await adminUpdateUser(token, editing.id, body);
+            if (transitioningToBanned) {
+                patchUser(await adminBlacklistUser(token, editing.id, form.banReason.trim()));
+            } else if (transitioningFromBanned) {
+                patchUser(await adminUnblacklistUser(token, editing.id));
             } else {
-                const created = await adminCreateUser(token, body);
-                setUsers(prev => [created, ...prev]);
+                patchUser(updated);
             }
             setUserModal(false);
         } catch (e) { setFormError(e.message); }
@@ -284,6 +317,12 @@ function UserDetailSection({ token }) {
         setSelected(updated);
     }
 
+    const canSeeAdminList   = isSuperAdmin || userPermissions.includes('USER_ADMIN_DETAIL');
+    const canSeeRegularList = isSuperAdmin || userPermissions.includes('USER_REGULAR_DETAIL');
+    const adminRoleNames = new Set(allRoles.filter(r => r.isAdminRole || r.roleName === 'ROLE_ADMIN').map(r => r.roleName));
+    const adminUsers  = users.filter(u => u.roles?.some(r => adminRoleNames.has(r)));
+    const regularUsers = users.filter(u => !u.roles?.some(r => adminRoleNames.has(r)));
+
     return (
         <>
             <ErrorBanner message={actionError} onClose={() => setActionError('')} />
@@ -299,7 +338,6 @@ function UserDetailSection({ token }) {
                         <option value="INACTIVE">Inactive</option>
                         <option value="BANNED">Banned</option>
                     </select>
-                    <button className="aup-btn aup-btn--primary" onClick={openCreate}>+ New User</button>
                 </div>
             </div>
 
@@ -311,28 +349,20 @@ function UserDetailSection({ token }) {
                     {loading ? <div className="aup-placeholder">Loading…</div>
                         : users.length === 0 ? <div className="aup-placeholder">No users found.</div>
                         : (
-                            <table className="aup-table">
-                                <thead><tr>
-                                    <th>ID</th><th>Username</th><th>Email</th>
-                                    <th>Roles</th><th>Status</th><th>Joined</th>
-                                </tr></thead>
-                                <tbody>
-                                {users.map(u => (
-                                    <tr key={u.id}
-                                        className={`aup-row ${selected?.id === u.id ? 'aup-row--active' : ''}`}
-                                        onClick={() => selectUser(u)}>
-                                        <td className="aup-cell--muted">{u.id}</td>
-                                        <td><strong>{u.username}</strong></td>
-                                        <td className="aup-cell--muted">{u.email || '—'}</td>
-                                        <td>{(u.roles || []).map(r => <RoleBadge key={r} role={r} />)}</td>
-                                        <td><StatusBadge status={u.status} /></td>
-                                        <td className="aup-cell--muted">
-                                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                            <>
+                                {canSeeAdminList && (
+                                    <div className="aup-user-section">
+                                        <div className="aup-section-header">Admin Users</div>
+                                        <UsersTable users={adminUsers} selected={selected} onSelect={selectUser} emptyMessage="No admin users." />
+                                    </div>
+                                )}
+                                {canSeeRegularList && (
+                                    <div className="aup-user-section">
+                                        <div className="aup-section-header">Regular Users</div>
+                                        <UsersTable users={regularUsers} selected={selected} onSelect={selectUser} emptyMessage="No regular users." />
+                                    </div>
+                                )}
+                            </>
                         )}
                 </div>
 
@@ -373,20 +403,17 @@ function UserDetailSection({ token }) {
                 )}
             </div>
 
-            {/* Create/Edit modal */}
-            {userModal && (
-                <Modal title={editing ? `Edit — ${editing.username}` : 'Create User'} onClose={() => setUserModal(false)}>
+            {/* Edit modal */}
+            {userModal && editing && (
+                <Modal title={`Edit — ${editing.username}`} onClose={() => setUserModal(false)}>
                     <div className="aup-form">
-                        {!editing && (<><label>Username *</label>
-                            <input className="aup-input" value={form.username}
-                                onChange={e => setForm(f => ({ ...f, username: e.target.value }))} /></>)}
                         <label>Email</label>
                         <input className="aup-input" value={form.email}
                             onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                         <label>Phone</label>
                         <input className="aup-input" value={form.phone}
                             onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-                        <label>{editing ? 'New Password (leave blank to keep)' : 'Password *'}</label>
+                        <label>New Password (leave blank to keep)</label>
                         <input className="aup-input" type="password" value={form.password}
                             onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
                         <label>Role</label>
@@ -400,28 +427,31 @@ function UserDetailSection({ token }) {
                                 </label>
                             ))}
                         </div>
-                        {editing && (<>
-                            <label>Status</label>
-                            <select className="aup-input" value={form.status}
-                                onChange={e => setForm(f => ({ ...f, status: e.target.value, banReason: '' }))}>
-                                <option value="ACTIVE">Active</option>
-                                <option value="INACTIVE">Inactive</option>
-                                <option value="BANNED">Banned</option>
-                            </select>
-                            {form.status === 'BANNED' && editing.status !== 'BANNED' && (<>
-                                <label style={{ color: '#c62828' }}>Ban Reason *</label>
-                                <textarea className="aup-textarea" rows={3}
-                                    placeholder="Provide a reason for banning this user…"
-                                    value={form.banReason}
-                                    onChange={e => setForm(f => ({ ...f, banReason: e.target.value }))} />
-                            </>)}
+                        <label>Status</label>
+                        <select className="aup-input" value={form.status}
+                            onChange={e => setForm(f => ({ ...f, status: e.target.value, banReason: '' }))}>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                            <option value="BANNED">Banned</option>
+                        </select>
+                        {form.status === 'BANNED' && editing.status !== 'BANNED' && (<>
+                            <label style={{ color: '#c62828' }}>Ban Reason *</label>
+                            <textarea className="aup-textarea" rows={3}
+                                placeholder="Provide a reason for banning this user…"
+                                value={form.banReason}
+                                onChange={e => setForm(f => ({ ...f, banReason: e.target.value }))} />
                         </>)}
+                        {editing.status === 'BANNED' && form.status !== 'BANNED' && (
+                            <div style={{ fontSize: 12, color: '#e65100', marginTop: 2 }}>
+                                ⚠ Changing status will also remove this user from the blacklist.
+                            </div>
+                        )}
                     </div>
                     {formError && <div className="aup-error">{formError}</div>}
                     <div className="aup-modal-footer">
                         <button className="aup-btn" onClick={() => setUserModal(false)}>Cancel</button>
                         <button className="aup-btn aup-btn--primary" onClick={submitUserForm} disabled={saving}>
-                            {saving ? 'Saving…' : editing ? 'Save Changes' : 'Create User'}
+                            {saving ? 'Saving…' : 'Save Changes'}
                         </button>
                     </div>
                 </Modal>
@@ -441,10 +471,14 @@ function RolesPermissionsSection({ token }) {
     const [expandedRole, setExpandedRole] = useState(null); // role id with expanded user list
     const [roleModal, setRoleModal]       = useState(false);
     const [editingRole, setEditingRole]   = useState(null);
-    const [addUserModal, setAddUserModal] = useState(false);
-    const [roleForm, setRoleForm]         = useState({ name: '', desc: '', isAdminRole: false });
-    const [addUserId, setAddUserId]       = useState('');
-    const [modalError, setModalError]     = useState('');
+    const [addUserModal, setAddUserModal]       = useState(false);
+    const [addUserQuery, setAddUserQuery]       = useState('');
+    const [addUserResults, setAddUserResults]   = useState([]);
+    const [addUserSelected, setAddUserSelected] = useState(null);
+    const [addUserSearching, setAddUserSearching] = useState(false);
+    const addUserDebounceRef = useRef(null);
+    const [roleForm, setRoleForm]               = useState({ name: '', desc: '', isAdminRole: false });
+    const [modalError, setModalError]           = useState('');
     const [saving, setSaving]             = useState(false);
     const [actionError, setActionError]   = useState('');
     const [togglingPerm, setTogglingPerm] = useState(null);
@@ -505,15 +539,32 @@ function RolesPermissionsSection({ token }) {
         } catch (e) { setActionError('Failed to remove user from role. Please try again.'); }
     }
 
+    function handleAddUserSearch(val) {
+        setAddUserQuery(val);
+        setAddUserSelected(null);
+        clearTimeout(addUserDebounceRef.current);
+        if (!val.trim()) { setAddUserResults([]); return; }
+        addUserDebounceRef.current = setTimeout(async () => {
+            setAddUserSearching(true);
+            try { setAddUserResults(await adminListUsers(token, { keyword: val })); }
+            catch { } finally { setAddUserSearching(false); }
+        }, 300);
+    }
+
+    function openAddUserModal() {
+        setModalError('');
+        setAddUserQuery(''); setAddUserResults([]); setAddUserSelected(null);
+        setAddUserModal(true);
+    }
+
     async function submitAddUser() {
-        const id = parseInt(addUserId);
-        if (!id) { setModalError('Enter a valid user ID'); return; }
+        if (!addUserSelected) { setModalError('Select a user from the list'); return; }
         setSaving(true); setModalError('');
         try {
-            const updated = await adminAddUserToRole(token, selectedRole.id, id);
+            const updated = await adminAddUserToRole(token, selectedRole.id, addUserSelected.id);
             setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
             if (selectedRole?.id === updated.id) setSelectedRole(updated);
-            setAddUserModal(false); setAddUserId('');
+            setAddUserModal(false);
         } catch (e) { setModalError(e.message); }
         finally { setSaving(false); }
     }
@@ -601,7 +652,7 @@ function RolesPermissionsSection({ token }) {
                 {selectedRole && (
                     <div style={{ padding: '10px 14px', borderTop: '1px solid #eee' }}>
                         <button className="aup-btn aup-btn--sm" style={{ width: '100%' }}
-                            onClick={() => { setModalError(''); setAddUserId(''); setAddUserModal(true); }}>
+                            onClick={openAddUserModal}>
                             + Add User to {selectedRole.roleName}
                         </button>
                     </div>
@@ -676,14 +727,43 @@ function RolesPermissionsSection({ token }) {
             {addUserModal && (
                 <Modal title={`Add User to ${selectedRole?.roleName}`} onClose={() => setAddUserModal(false)}>
                     <div className="aup-form">
-                        <label>User ID *</label>
-                        <input className="aup-input" type="number" placeholder="Enter user ID"
-                            value={addUserId} onChange={e => setAddUserId(e.target.value)} />
+                        <label>Search User</label>
+                        <div style={{ position: 'relative' }}>
+                            <input className="aup-input" placeholder="Type username…"
+                                value={addUserQuery}
+                                onChange={e => handleAddUserSearch(e.target.value)}
+                                autoComplete="off"
+                                autoFocus />
+                            {addUserSearching && (
+                                <div className="aup-user-search-hint">Searching…</div>
+                            )}
+                            {!addUserSelected && addUserResults.length > 0 && (
+                                <div className="aup-user-search-dropdown">
+                                    {addUserResults.map(u => (
+                                        <div key={u.id} className="aup-user-search-item"
+                                            onMouseDown={e => e.preventDefault()}
+                                            onClick={() => { setAddUserSelected(u); setAddUserQuery(u.username); setAddUserResults([]); }}>
+                                            <strong>{u.username}</strong>
+                                            <span className="aup-cell--muted"> #{u.id}</span>
+                                            {u.email && <span className="aup-cell--muted"> · {u.email}</span>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        {addUserSelected && (
+                            <div className="aup-user-search-selected">
+                                <span>Selected: <strong>{addUserSelected.username}</strong> <span className="aup-cell--muted">#{addUserSelected.id}</span></span>
+                                <button className="aup-user-chip-remove"
+                                    onClick={() => { setAddUserSelected(null); setAddUserQuery(''); }}>×</button>
+                            </div>
+                        )}
                     </div>
                     {modalError && <div className="aup-error">{modalError}</div>}
                     <div className="aup-modal-footer">
                         <button className="aup-btn" onClick={() => setAddUserModal(false)}>Cancel</button>
-                        <button className="aup-btn aup-btn--primary" onClick={submitAddUser} disabled={saving}>
+                        <button className="aup-btn aup-btn--primary" onClick={submitAddUser}
+                            disabled={saving || !addUserSelected}>
                             {saving ? 'Adding…' : 'Add User'}
                         </button>
                     </div>
@@ -749,12 +829,17 @@ function OperationLogSection({ token }) {
         });
     }
 
+    const dateRangeError  = dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo);
+    const lDateRangeError = lDateFrom && lDateTo && new Date(lDateFrom) > new Date(lDateTo);
+
     // Filter admin logs
     const filteredAdmin = adminLogs.filter(l => {
         if (!activeActions.has(l.action)) return false;
         if (operatorKw && !l.operatorUsername?.toLowerCase().includes(operatorKw.toLowerCase())) return false;
-        if (dateFrom && new Date(l.createdAt) < new Date(dateFrom)) return false;
-        if (dateTo   && new Date(l.createdAt) > new Date(dateTo + 'T23:59:59')) return false;
+        if (!dateRangeError) {
+            if (dateFrom && new Date(l.createdAt) < new Date(dateFrom)) return false;
+            if (dateTo   && new Date(l.createdAt) > new Date(dateTo + 'T23:59:59')) return false;
+        }
         return true;
     });
 
@@ -764,8 +849,10 @@ function OperationLogSection({ token }) {
         if (ipKw   && !l.loginIp?.toLowerCase().includes(ipKw.toLowerCase())) return false;
         if (resultFilter === 'success' && !l.successFlag) return false;
         if (resultFilter === 'failed'  &&  l.successFlag) return false;
-        if (lDateFrom && new Date(l.loginTime) < new Date(lDateFrom)) return false;
-        if (lDateTo   && new Date(l.loginTime) > new Date(lDateTo + 'T23:59:59')) return false;
+        if (!lDateRangeError) {
+            if (lDateFrom && new Date(l.loginTime) < new Date(lDateFrom)) return false;
+            if (lDateTo   && new Date(l.loginTime) > new Date(lDateTo + 'T23:59:59')) return false;
+        }
         return true;
     });
 
@@ -784,10 +871,11 @@ function OperationLogSection({ token }) {
                             <div className="aup-log-filter-group">
                                 <span className="aup-log-filter-label">Date</span>
                                 <div className="aup-log-date-range">
-                                    <input type="date" className="aup-input aup-log-date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                                    <input type="date" className={`aup-input aup-log-date${dateRangeError ? ' aup-input--error' : ''}`} value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
                                     <span className="aup-cell--muted">—</span>
-                                    <input type="date" className="aup-input aup-log-date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                                    <input type="date" className={`aup-input aup-log-date${dateRangeError ? ' aup-input--error' : ''}`} value={dateTo} onChange={e => setDateTo(e.target.value)} />
                                 </div>
+                                {dateRangeError && <span className="aup-date-error">"From" must be before "To"</span>}
                             </div>
                             <div className="aup-log-filter-group">
                                 <span className="aup-log-filter-label">Operator</span>
@@ -818,10 +906,11 @@ function OperationLogSection({ token }) {
                         <div className="aup-log-filter-group">
                             <span className="aup-log-filter-label">Date</span>
                             <div className="aup-log-date-range">
-                                <input type="date" className="aup-input aup-log-date" value={lDateFrom} onChange={e => setLDateFrom(e.target.value)} />
+                                <input type="date" className={`aup-input aup-log-date${lDateRangeError ? ' aup-input--error' : ''}`} value={lDateFrom} onChange={e => setLDateFrom(e.target.value)} />
                                 <span className="aup-cell--muted">—</span>
-                                <input type="date" className="aup-input aup-log-date" value={lDateTo} onChange={e => setLDateTo(e.target.value)} />
+                                <input type="date" className={`aup-input aup-log-date${lDateRangeError ? ' aup-input--error' : ''}`} value={lDateTo} onChange={e => setLDateTo(e.target.value)} />
                             </div>
+                            {lDateRangeError && <span className="aup-date-error">"From" must be before "To"</span>}
                         </div>
                         <div className="aup-log-filter-group">
                             <span className="aup-log-filter-label">Username</span>
@@ -992,11 +1081,6 @@ function AddressesTab({ addresses }) {
             ))}
         </div>
     );
-}
-
-function UserOperationLogTab({ logs }) {
-    if (!logs.length) return <div className="aup-placeholder">No operation records.</div>;
-    return <AdminOpsTable logs={logs} />;
 }
 
 function AdminOpsTable({ logs }) {

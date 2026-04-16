@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/users")
-@PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
@@ -23,11 +22,9 @@ public class AdminUserController {
         this.adminUserService = adminUserService;
     }
 
-    /**
-     * GET /api/admin/users
-     * GET /api/admin/users?keyword=john          → search by username
-     * GET /api/admin/users?status=BANNED         → filter by status
-     */
+    // ── User Detail tab (admin or regular) ───────────────────────────────────
+
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @GetMapping
     public List<UserResponse> listUsers(
             @RequestParam(required = false) String keyword,
@@ -42,116 +39,85 @@ public class AdminUserController {
         return adminUserService.listAllUsers();
     }
 
-    /**
-     * GET /api/admin/users/{id}
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @GetMapping("/{id}")
     public UserResponse getUser(@PathVariable Long id) {
         return adminUserService.getUserById(id);
     }
 
-    /**
-     * POST /api/admin/users
-     * Body: { username, password, email, phone, levelId, roleNames }
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequest req) {
         UserResponse created = adminUserService.createUser(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    /**
-     * PUT /api/admin/users/{id}
-     * Body: { email, phone, status, levelId, roleNames }  — all optional
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @PutMapping("/{id}")
     public UserResponse updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest req) {
         return adminUserService.updateUser(id, req);
     }
 
-    /**
-     * DELETE /api/admin/users/{id}
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         adminUserService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
-    // ===== Blacklist =====
-
-    /**
-     * POST /api/admin/users/{id}/blacklist
-     * Body: { reason }  → bans the user and records the reason
-     */
-    @PostMapping("/{id}/blacklist")
-    public UserResponse blacklistUser(@PathVariable Long id, @RequestBody BlacklistRequest req) {
-        return adminUserService.blacklistUser(id, req);
-    }
-
-    /**
-     * DELETE /api/admin/users/{id}/blacklist
-     * Removes all blacklist entries and restores status to ACTIVE
-     */
-    @DeleteMapping("/{id}/blacklist")
-    public UserResponse removeFromBlacklist(@PathVariable Long id) {
-        return adminUserService.removeFromBlacklist(id);
-    }
-
-    /**
-     * GET /api/admin/users/{id}/blacklist
-     * Returns the full blacklist history for this user
-     */
-    @GetMapping("/{id}/blacklist")
-    public List<UserBlacklist> getBlacklistEntries(@PathVariable Long id) {
-        return adminUserService.getUserBlacklistEntries(id);
-    }
-
-    // ===== Sub-resources =====
-
-    /**
-     * GET /api/admin/users/{id}/addresses
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @GetMapping("/{id}/addresses")
     public List<UserAddressResponse> getAddresses(@PathVariable Long id) {
         return adminUserService.getUserAddresses(id);
     }
 
-    /**
-     * GET /api/admin/users/{id}/login-logs
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @GetMapping("/{id}/login-logs")
     public List<UserLoginLogResponse> getLoginLogs(@PathVariable Long id) {
         return adminUserService.getUserLoginLogs(id);
     }
 
-    /**
-     * GET /api/admin/users/{id}/operation-logs
-     */
+    // ── Operation Log tab ─────────────────────────────────────────────────────
+
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_OPERATION_LOG'))")
     @GetMapping("/{id}/operation-logs")
     public List<AdminOperationLogResponse> getOperationLogs(@PathVariable Long id) {
         return adminUserService.getOperationLogs(id);
     }
 
-    /**
-     * GET /api/admin/operation-logs  — global, all users
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_OPERATION_LOG'))")
     @GetMapping("/operation-logs")
     public List<AdminOperationLogResponse> getAllOperationLogs() {
         return adminUserService.getAllOperationLogs();
     }
 
-    /**
-     * GET /api/admin/login-logs  — global login logs
-     */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_OPERATION_LOG'))")
     @GetMapping("/login-logs")
     public List<UserLoginLogResponse> getAllLoginLogs() {
         return adminUserService.getAllLoginLogs();
     }
 
-    /**
-     * GET /api/admin/users/blacklist  — all blacklist entries
-     */
+    // ── Blacklist tab ─────────────────────────────────────────────────────────
+
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_BLACKLIST'))")
+    @PostMapping("/{id}/blacklist")
+    public UserResponse blacklistUser(@PathVariable Long id, @RequestBody BlacklistRequest req) {
+        return adminUserService.blacklistUser(id, req);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_BLACKLIST'))")
+    @DeleteMapping("/{id}/blacklist")
+    public UserResponse removeFromBlacklist(@PathVariable Long id) {
+        return adminUserService.removeFromBlacklist(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_BLACKLIST'))")
+    @GetMapping("/{id}/blacklist")
+    public List<UserBlacklist> getBlacklistEntries(@PathVariable Long id) {
+        return adminUserService.getUserBlacklistEntries(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_BLACKLIST'))")
     @GetMapping("/blacklist")
     public List<UserBlacklistResponse> getAllBlacklist() {
         return adminUserService.getAllBlacklistEntries();

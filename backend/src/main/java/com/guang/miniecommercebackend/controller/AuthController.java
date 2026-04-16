@@ -12,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -57,13 +58,23 @@ public class AuthController {
         String authorities = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-        boolean isAdmin = userRepository.findByUsername(username)
-                .map(u -> u.getRoles().stream().anyMatch(r -> r.isAdminRole() || "ROLE_ADMIN".equals(r.getRoleName())))
-                .orElse(false);
+        var user = userRepository.findByUsername(username).orElse(null);
+        boolean isSuperAdmin = user != null && user.getRoles().stream()
+                .anyMatch(r -> "ROLE_ADMIN".equals(r.getRoleName()));
+        boolean isAdmin = isSuperAdmin || (user != null && user.getRoles().stream()
+                .anyMatch(r -> r.isAdminRole()));
+        List<String> permissions = user == null ? List.of() :
+                user.getRoles().stream()
+                    .flatMap(r -> r.getPermissions().stream())
+                    .map(p -> p.getPermissionCode())
+                    .distinct().sorted()
+                    .collect(Collectors.toList());
         return Map.of(
                 "username", username,
                 "authorities", authorities,
-                "isAdmin", isAdmin
+                "isAdmin", isAdmin,
+                "isSuperAdmin", isSuperAdmin,
+                "permissions", permissions
         );
     }
 
