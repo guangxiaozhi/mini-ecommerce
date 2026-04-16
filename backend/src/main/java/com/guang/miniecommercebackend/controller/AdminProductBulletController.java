@@ -18,7 +18,7 @@ public class AdminProductBulletController {
         this.productService = productService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @PutMapping
     public ResponseEntity<ProductBulletResponse> saveBullet(
             @PathVariable Long productId,

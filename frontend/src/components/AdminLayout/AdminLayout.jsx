@@ -4,13 +4,15 @@ import './AdminLayout.css'
 
 const NAV_ITEMS = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: '🗂️' },
-    { label: 'Products',  path: '/admin/products',  icon: '🛍️' },
-    { label: 'Orders',    path: '/admin/orders',    icon: '🧾' },
-    { label: 'Users',     path: '/admin/users',     icon: '👥' },
+    { label: 'Products',  path: '/admin/products',  icon: '🛍️', needs: p => p.some(c => c.startsWith('PRODUCT_')) },
+    { label: 'Orders',    path: '/admin/orders',    icon: '🧾', needs: p => p.some(c => c.startsWith('ORDER_')) },
+    { label: 'Users',     path: '/admin/users',     icon: '👥', needs: p => p.some(c => c.startsWith('USER_')) },
 ]
 
-export default function AdminLayout({ children, userName, onLogout }) {
+export default function AdminLayout({ children, userName, userRole, userPermissions = [], isSuperAdmin = false, onLogout }) {
+    const displayRole = userRole ? userRole.replace(/^ROLE_/, '') : 'Admin'
     const navigate = useNavigate()
+    const visibleNav = NAV_ITEMS.filter(item => !item.needs || isSuperAdmin || item.needs(userPermissions))
 
     return (
         <div className="al-shell">
@@ -23,7 +25,7 @@ export default function AdminLayout({ children, userName, onLogout }) {
                 </div>
 
                 <nav className="al-nav">
-                    {NAV_ITEMS.map(item => (
+                    {visibleNav.map(item => (
                         <NavLink
                             key={item.path}
                             to={item.path}
@@ -55,7 +57,7 @@ export default function AdminLayout({ children, userName, onLogout }) {
                             <span className='al-user-btn__icon'>👤</span>
                             <div className="al-user-btn__text">
                                 <span className="al-topbar__username">{userName ?? 'Admin'}</span>
-                                <span className="al-topbar__role">Superadmin</span>
+                                <span className="al-topbar__role">{displayRole}</span>
                             </div>
                         </button>
 

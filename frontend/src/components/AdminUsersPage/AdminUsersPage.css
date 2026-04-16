@@ -54,6 +54,8 @@
 .aup-log-filter-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
 .aup-log-date-range { display: flex; align-items: center; gap: 6px; }
 .aup-log-date { width: 130px; font-size: 13px; padding: 6px 8px; }
+.aup-input--error { border-color: #e53935 !important; }
+.aup-date-error { font-size: 11px; color: #c62828; margin-top: 3px; }
 .aup-log-action-toggles { display: flex; gap: 6px; flex-wrap: wrap; }
 .aup-log-action-btn { padding: 4px 12px; border-radius: 10px; border: 1px solid #ddd; background: #f5f5f5; color: #888; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
 .aup-log-action-btn--on { border-color: transparent; }
@@ -147,9 +149,21 @@
 /* Misc */
 .aup-error { color: #c62828; font-size: 13px; padding: 6px 0; }
 .aup-placeholder { text-align: center; color: #aaa; padding: 40px; font-size: 14px; }
+
+/* User list section headers */
+.aup-section-header { padding: 7px 14px; font-size: 11px; font-weight: 700; color: #5c6bc0; text-transform: uppercase; letter-spacing: 0.06em; background: #f5f6fb; border-bottom: 1px solid #e8eaf0; position: sticky; top: 0; z-index: 1; }
+.aup-user-section + .aup-user-section { border-top: 2px solid #e8eaf0; }
 .aup-info-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .aup-info-table td { padding: 8px 0; border-bottom: 1px solid #f5f5f5; vertical-align: top; }
 .aup-info-key { color: #888; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; width: 90px; }
 .aup-sub-list { display: flex; flex-direction: column; gap: 10px; }
 .aup-sub-card { background: #f8f9ff; border-radius: 8px; padding: 12px 14px; font-size: 14px; }
 .aup-badge-default { display: inline-block; margin-top: 4px; padding: 2px 8px; background: #e3f2fd; color: #1565c0; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
+/* User search picker */
+.aup-user-search-hint { font-size: 12px; color: #888; margin-top: 4px; }
+.aup-user-search-dropdown { position: absolute; left: 0; right: 0; top: calc(100% + 2px); background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 10; max-height: 200px; overflow-y: auto; }
+.aup-user-search-item { padding: 9px 12px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+.aup-user-search-item:last-child { border-bottom: none; }
+.aup-user-search-item:hover { background: #f5f7ff; }
+.aup-user-search-selected { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding: 7px 10px; background: #eef0fb; border-radius: 8px; font-size: 13px; }

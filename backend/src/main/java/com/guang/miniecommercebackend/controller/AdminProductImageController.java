@@ -18,7 +18,7 @@ public class AdminProductImageController {
         this.productService = productService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @PostMapping
     public ResponseEntity<ProductImageResponse> addImage(
             @PathVariable Long productId,
@@ -27,7 +27,7 @@ public class AdminProductImageController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @PutMapping("/{imageId}")
     public ResponseEntity<ProductImageResponse> updateImage(
             @PathVariable Long productId,
@@ -37,7 +37,7 @@ public class AdminProductImageController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @DeleteMapping("/{imageId}")
     public ResponseEntity<Void> deleteImage(
             @PathVariable Long productId,

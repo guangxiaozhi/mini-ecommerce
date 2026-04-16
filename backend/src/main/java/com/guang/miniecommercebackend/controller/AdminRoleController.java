@@ -1,7 +1,6 @@
 package com.guang.miniecommercebackend.controller;
 
 import com.guang.miniecommercebackend.dto.RoleResponse;
-import com.guang.miniecommercebackend.dto.UserResponse;
 import com.guang.miniecommercebackend.service.AdminUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +12,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/roles")
-@PreAuthorize("hasRole('ADMIN')")
 public class AdminRoleController {
 
     private final AdminUserService adminUserService;
@@ -22,13 +20,13 @@ public class AdminRoleController {
         this.adminUserService = adminUserService;
     }
 
-    /** GET /api/admin/roles */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and (hasAuthority('USER_ROLES') or hasAuthority('USER_ADMIN_DETAIL') or hasAuthority('USER_REGULAR_DETAIL')))")
     @GetMapping
     public List<RoleResponse> listRoles() {
         return adminUserService.listRoles();
     }
 
-    /** POST /api/admin/roles  Body: { "roleName": "ROLE_X", "description": "...", "isAdminRole": true } */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_ROLES'))")
     @PostMapping
     public ResponseEntity<RoleResponse> createRole(@RequestBody Map<String, Object> body) {
         String roleName = (String) body.get("roleName");
@@ -38,7 +36,7 @@ public class AdminRoleController {
                 .body(adminUserService.createRole(roleName, description, isAdminRole));
     }
 
-    /** PUT /api/admin/roles/{id}  Body: { "roleName": "...", "description": "...", "isAdminRole": true } */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_ROLES'))")
     @PutMapping("/{id}")
     public RoleResponse updateRole(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         String roleName = (String) body.get("roleName");
@@ -47,32 +45,32 @@ public class AdminRoleController {
         return adminUserService.updateRole(id, roleName, description, isAdminRole);
     }
 
-    /** DELETE /api/admin/roles/{id} */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_ROLES'))")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
         adminUserService.deleteRole(id);
         return ResponseEntity.noContent().build();
     }
 
-    /** POST /api/admin/roles/{roleId}/users/{userId} */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_ROLES'))")
     @PostMapping("/{roleId}/users/{userId}")
     public RoleResponse addUserToRole(@PathVariable Long roleId, @PathVariable Long userId) {
         return adminUserService.addUserToRole(roleId, userId);
     }
 
-    /** DELETE /api/admin/roles/{roleId}/users/{userId} */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_ROLES'))")
     @DeleteMapping("/{roleId}/users/{userId}")
     public RoleResponse removeUserFromRole(@PathVariable Long roleId, @PathVariable Long userId) {
         return adminUserService.removeUserFromRole(roleId, userId);
     }
 
-    /** POST /api/admin/roles/{roleId}/permissions/{permissionCode} */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_ROLES'))")
     @PostMapping("/{roleId}/permissions/{permissionCode}")
     public RoleResponse addPermission(@PathVariable Long roleId, @PathVariable String permissionCode) {
         return adminUserService.addPermissionToRole(roleId, permissionCode);
     }
 
-    /** DELETE /api/admin/roles/{roleId}/permissions/{permissionCode} */
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('USER_ROLES'))")
     @DeleteMapping("/{roleId}/permissions/{permissionCode}")
     public RoleResponse removePermission(@PathVariable Long roleId, @PathVariable String permissionCode) {
         return adminUserService.removePermissionFromRole(roleId, permissionCode);
