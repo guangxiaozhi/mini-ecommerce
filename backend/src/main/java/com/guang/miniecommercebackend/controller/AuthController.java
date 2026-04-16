@@ -3,13 +3,16 @@ package com.guang.miniecommercebackend.controller;
 import com.guang.miniecommercebackend.dto.AuthResponse;
 import com.guang.miniecommercebackend.dto.LoginRequest;
 import com.guang.miniecommercebackend.dto.RegisterRequest;
+import com.guang.miniecommercebackend.repository.UserRepository;
 import com.guang.miniecommercebackend.service.AuthService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -17,8 +20,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
-    public AuthController(AuthService authService){
+    private final UserRepository userRepository;
+
+    public AuthController(AuthService authService, UserRepository userRepository) {
         this.authService = authService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -37,8 +43,8 @@ public class AuthController {
      * Body: JSON { "username": "...", "password": "..." }
      */
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request){
-        return authService.login(request);
+    public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest){
+        return authService.login(request, httpRequest);
     }
 
     /**
@@ -46,17 +52,30 @@ public class AuthController {
      * GET /api/auth/me — 需在请求头带上 Bearer Token，由 JwtAuthenticationFilter 写入登录态。
      */
     @GetMapping("/me")
-    public Map<String, String> me() {
+    public Map<String, Object> me() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = (String) auth.getPrincipal();
         String authorities = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+        var user = userRepository.findByUsername(username).orElse(null);
+        boolean isSuperAdmin = user != null && user.getRoles().stream()
+                .anyMatch(r -> "ROLE_ADMIN".equals(r.getRoleName()));
+        boolean isAdmin = isSuperAdmin || (user != null && user.getRoles().stream()
+                .anyMatch(r -> r.isAdminRole()));
+        List<String> permissions = user == null ? List.of() :
+                user.getRoles().stream()
+                    .flatMap(r -> r.getPermissions().stream())
+                    .map(p -> p.getPermissionCode())
+                    .distinct().sorted()
+                    .collect(Collectors.toList());
         return Map.of(
                 "username", username,
-                "authorities", authorities
+                "authorities", authorities,
+                "isAdmin", isAdmin,
+                "isSuperAdmin", isSuperAdmin,
+                "permissions", permissions
         );
     }
-
 
 }

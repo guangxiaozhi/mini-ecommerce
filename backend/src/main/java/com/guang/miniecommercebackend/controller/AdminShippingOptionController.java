@@ -18,7 +18,7 @@ public class AdminShippingOptionController {
         this.productService = productService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @PostMapping
     public ResponseEntity<ShippingOptionResponse> addShipping(
             @PathVariable Long productId,
@@ -27,7 +27,7 @@ public class AdminShippingOptionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @PutMapping("/{shippingId}")
     public ResponseEntity<ShippingOptionResponse> updateShipping(
             @PathVariable Long productId,
@@ -37,7 +37,7 @@ public class AdminShippingOptionController {
         return ResponseEntity.ok(updated);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('PRODUCT_EDIT'))")
     @DeleteMapping("/{shippingId}")
     public ResponseEntity<Void> deleteShipping(
             @PathVariable Long productId,

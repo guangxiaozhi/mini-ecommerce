@@ -119,12 +119,6 @@
     align-items: flex-end;
 }
 
-.al-topbar__username {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1a1a2e;
-}
-
 .al-topbar__role {
     font-size: 11px;
     color: #999;
@@ -147,9 +141,10 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    gap: 6px;
     padding: 4px 8px;
     border-radius: 8px;
-    width: 130px;
+    max-width: 200px;
 }
 
 .al-user-btn:hover {
@@ -196,4 +191,16 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.al-topbar__username {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
