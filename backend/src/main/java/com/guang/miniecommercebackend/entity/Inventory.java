@@ -24,7 +24,7 @@ public class Inventory {
     private int availableQty;
 
     @Version
-    private Long version;
+    private Long version; //optimistic locking
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
