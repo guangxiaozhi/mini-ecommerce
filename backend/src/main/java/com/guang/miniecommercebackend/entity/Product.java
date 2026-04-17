@@ -28,6 +28,9 @@ public class Product {
     @Column(nullable = false)
     private Integer stock;
 
+    @Column(name = "cost_price", precision = 10, scale = 2)
+    private BigDecimal costPrice;
+
     @Column(nullable = false)
     private Boolean active;
 
@@ -82,6 +85,14 @@ public class Product {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+
+    public BigDecimal getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(BigDecimal costPrice) {
+        this.costPrice = costPrice;
     }
 
     public Boolean getActive() {
