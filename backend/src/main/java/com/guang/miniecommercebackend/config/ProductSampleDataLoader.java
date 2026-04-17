@@ -1,10 +1,12 @@
 package com.guang.miniecommercebackend.config;
 
+import com.guang.miniecommercebackend.entity.Inventory;
 import com.guang.miniecommercebackend.entity.Product;
 import com.guang.miniecommercebackend.entity.ProductImage;
 import com.guang.miniecommercebackend.entity.ProductBullet;
 import com.guang.miniecommercebackend.entity.Role;
 import com.guang.miniecommercebackend.entity.ShippingOption;
+import com.guang.miniecommercebackend.repository.InventoryRepository;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.repository.ProductImageRepository;
 import com.guang.miniecommercebackend.repository.ProductBulletRepository;
@@ -25,17 +27,20 @@ public class ProductSampleDataLoader implements CommandLineRunner {
     private final ProductBulletRepository productBulletRepository;
     private final ShippingOptionRepository shippingOptionRepository;
     private final RoleRepository roleRepository;
+    private final InventoryRepository inventoryRepository;
 
     public ProductSampleDataLoader(ProductRepository productRepository,
                                    ProductImageRepository productImageRepository,
                                    ProductBulletRepository productBulletRepository,
                                    ShippingOptionRepository shippingOptionRepository,
-                                   RoleRepository roleRepository) {
+                                   RoleRepository roleRepository,
+                                   InventoryRepository inventoryRepository) {
         this.productRepository = productRepository;
         this.productImageRepository = productImageRepository;
         this.productBulletRepository = productBulletRepository;
         this.shippingOptionRepository = shippingOptionRepository;
         this.roleRepository = roleRepository;
+        this.inventoryRepository = inventoryRepository;
     }
 
     @Override
@@ -44,10 +49,7 @@ public class ProductSampleDataLoader implements CommandLineRunner {
         seedRoleIfAbsent("ROLE_USER", "Standard customer account");
         seedRoleIfAbsent("ROLE_ADMIN", "Full admin access");
 
-        if (productRepository.count() > 0) {
-            return;
-        }
-
+        if (productRepository.count() == 0) {
         // ── Product 1 ──
         Product p1 = new Product();
         p1.setName("示例笔记本");
@@ -140,6 +142,22 @@ public class ProductSampleDataLoader implements CommandLineRunner {
         s3.setDescription("Estimated 5-7 business days");
         s3.setIsFree(true);
         shippingOptionRepository.save(s3);
+        } // end if (productRepository.count() == 0)
+
+        seedInventoriesFromProducts();
+    }
+
+    private void seedInventoriesFromProducts() {
+        for (Product product : productRepository.findAll()) {
+            if (inventoryRepository.findByProductId(product.getId()).isEmpty()) {
+                Inventory inv = new Inventory();
+                inv.setProductId(product.getId());
+                inv.setOnHandQty(product.getStock());
+                inv.setAllocatedQty(0);
+                inv.setAvailableQty(product.getStock());
+                inventoryRepository.save(inv);
+            }
+        }
     }
 
     private void seedRoleIfAbsent(String roleName, String description) {
