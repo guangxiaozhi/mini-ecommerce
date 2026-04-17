@@ -1,18 +1,28 @@
 package com.guang.miniecommercebackend.service;
 
+import com.guang.miniecommercebackend.dto.CreateReturnRequest;
 import com.guang.miniecommercebackend.dto.OrderDetailResponse;
 import com.guang.miniecommercebackend.dto.OrderItemResponse;
 import com.guang.miniecommercebackend.dto.OrderSummaryResponse;
+import com.guang.miniecommercebackend.dto.ReturnItemRequest;
+import com.guang.miniecommercebackend.dto.ReturnItemResponse;
+import com.guang.miniecommercebackend.dto.ReturnRequestResponse;
 import org.springframework.stereotype.Service;
 import com.guang.miniecommercebackend.repository.OrderRepository;
+import com.guang.miniecommercebackend.repository.ReturnItemRepository;
+import com.guang.miniecommercebackend.repository.ReturnRequestRepository;
 import com.guang.miniecommercebackend.repository.UserRepository;
 import com.guang.miniecommercebackend.repository.CartRepository;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.entity.Order;
 import com.guang.miniecommercebackend.entity.OrderItem;
+import com.guang.miniecommercebackend.entity.OrderStatus;
 import com.guang.miniecommercebackend.entity.Cart;
 import com.guang.miniecommercebackend.entity.CartItem;
 import com.guang.miniecommercebackend.entity.Product;
+import com.guang.miniecommercebackend.entity.ReturnItem;
+import com.guang.miniecommercebackend.entity.ReturnRequest;
+import com.guang.miniecommercebackend.entity.ReturnStatus;
 import com.guang.miniecommercebackend.entity.User;
 
 import org.springframework.http.HttpStatus;
@@ -23,6 +33,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -31,13 +42,23 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final CartService cartService;
+    private final InventoryService inventoryService;
+    private final ReturnRequestRepository returnRequestRepository;
+    private final ReturnItemRepository returnItemRepository;
 
-    public OrderService(OrderRepository orderRepository, UserRepository userRepository, CartRepository cartRepository, ProductRepository productRepository, CartService cartService){
+    public OrderService(OrderRepository orderRepository, UserRepository userRepository,
+                        CartRepository cartRepository, ProductRepository productRepository,
+                        CartService cartService, InventoryService inventoryService,
+                        ReturnRequestRepository returnRequestRepository,
+                        ReturnItemRepository returnItemRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.cartService = cartService;
+        this.inventoryService = inventoryService;
+        this.returnRequestRepository = returnRequestRepository;
+        this.returnItemRepository = returnItemRepository;
     }
 
     /**
@@ -73,13 +94,6 @@ public class OrderService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
             lockedById.put(productId, p);
         }
-        //  3) 用 Map里的Product 做库存校验
-        for (CartItem item : cart.getItems()){
-            Long pid = item.getProduct().getId();
-            Product p = lockedById.get(pid);
-            validateStock(p, item.getQuantity());
-        }
-
         //组装 Order / OrderItem
         Order order = new Order();
         order.setUserId(user.getId());
@@ -107,16 +121,59 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // 下单成功后扣减库存（与校验在同一事务里，避免只下单不扣库存）
-        for (CartItem cartItem : cart.getItems()){
-            Long pid = cartItem.getProduct().getId();
-            Product product = lockedById.get(pid);
-            product.setStock(product.getStock() - cartItem.getQuantity());
-            productRepository.save(product);
+        // Allocate inventory in sorted product-ID order (prevents deadlocks)
+        for (Long productId : productIds) {
+            int qty = cart.getItems().stream()
+                    .filter(ci -> ci.getProduct().getId().equals(productId))
+                    .mapToInt(CartItem::getQuantity)
+                    .sum();
+            inventoryService.allocate(productId, qty, saved.getId());
         }
         // 先扣库存再清空购物车
         cartService.clearCart(username);
         return toDetail(saved);
+    }
+
+    @Transactional
+    public ReturnRequestResponse createReturn(String username, Long orderId,
+                                              CreateReturnRequest req) {
+        User user = getUserByUsernameOr404(username);
+        Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "order not found"));
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "returns are only allowed for DELIVERED orders");
+        }
+        // Prevent duplicate active (non-rejected) return requests
+        List<ReturnRequest> existing = returnRequestRepository
+                .findByOrderIdAndStatusNot(orderId, ReturnStatus.REJECTED);
+        if (!existing.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "a return request already exists for this order");
+        }
+        ReturnRequest rr = new ReturnRequest();
+        rr.setOrderId(orderId);
+        rr.setUserId(user.getId());
+        rr.setReason(req.getReason());
+        ReturnRequest saved = returnRequestRepository.save(rr);
+
+        for (ReturnItemRequest itemReq : req.getItems()) {
+            OrderItem oi = order.getItems().stream()
+                    .filter(i -> i.getId().equals(itemReq.getOrderItemId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "order item not found: " + itemReq.getOrderItemId()));
+            ReturnItem ri = new ReturnItem();
+            ri.setReturnRequestId(saved.getId());
+            ri.setOrderItemId(oi.getId());
+            ri.setProductId(oi.getProductId());
+            ri.setProductName(oi.getProductName());
+            ri.setQuantity(itemReq.getQuantity());
+            returnItemRepository.save(ri);
+        }
+        List<ReturnItem> savedItems = returnItemRepository.findByReturnRequestId(saved.getId());
+        return toReturnResponse(saved, savedItems, user.getUsername());
     }
 
     //单条订单详情
@@ -136,12 +193,30 @@ public class OrderService {
                 .stream().map(this::toSummary).toList();
     }
 
-    private void validateStock(Product product, int requestedQty) {
-        if (product.getStock() < requestedQty) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "insufficient stock for product: " + product.getName());
-        }
+    private ReturnRequestResponse toReturnResponse(ReturnRequest rr,
+                                                   List<ReturnItem> items,
+                                                   String username) {
+        ReturnRequestResponse r = new ReturnRequestResponse();
+        r.setId(rr.getId());
+        r.setOrderId(rr.getOrderId());
+        r.setUserId(rr.getUserId());
+        r.setUsername(username);
+        r.setStatus(rr.getStatus().name());
+        r.setReason(rr.getReason());
+        r.setRefundAmount(rr.getRefundAmount());
+        r.setRequestedAt(rr.getRequestedAt());
+        r.setResolvedAt(rr.getResolvedAt());
+        r.setResolvedBy(rr.getResolvedBy());
+        r.setItems(items.stream().map(ri -> {
+            ReturnItemResponse resp = new ReturnItemResponse();
+            resp.setId(ri.getId());
+            resp.setOrderItemId(ri.getOrderItemId());
+            resp.setProductId(ri.getProductId());
+            resp.setProductName(ri.getProductName());
+            resp.setQuantity(ri.getQuantity());
+            return resp;
+        }).collect(Collectors.toList()));
+        return r;
     }
 
     private User getUserByUsernameOr404(String username) {
