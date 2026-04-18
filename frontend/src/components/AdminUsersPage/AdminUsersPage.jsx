@@ -108,10 +108,15 @@ const PERMISSION_CONFIG = [
         { code: 'PRODUCT_EDIT',   label: 'Edit' },
         { code: 'PRODUCT_DELETE', label: 'Delete' },
     ]},
+    { resource: 'Inventory', items: [
+        { code: 'INVENTORY_VIEW',   label: 'View' },
+        { code: 'INVENTORY_MANAGE', label: 'Manage' },
+    ]},
     { resource: 'Orders', items: [
-        { code: 'ORDER_VIEW_OWN', label: 'View Own' },
-        { code: 'ORDER_VIEW_ALL', label: 'View All' },
-        { code: 'ORDER_MANAGE',   label: 'Manage' },
+        { code: 'ORDER_VIEW_ALL',      label: 'View All' },
+        { code: 'ORDER_STATUS_UPDATE', label: 'Update Status' },
+        { code: 'ORDER_RETURNS',       label: 'Returns' },
+        { code: 'ORDER_ANALYTICS',     label: 'Analytics' },
     ]},
     { resource: 'Users', items: [
         { code: 'USER_ADMIN_DETAIL',   label: 'Admin User Detail' },
