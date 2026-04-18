@@ -2,7 +2,7 @@
 
 import { Link, useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { getOrder } from '../../api/orders.js'
+import { getOrder, createReturn } from '../../api/orders.js'
 import './OrderDetailPage.css'
 
 function formatMoney(n) {
@@ -21,9 +21,156 @@ function formatDate(iso) {
 
 function statusClass(status) {
     const s = String(status || '').toUpperCase()
-    if (s === 'PAID') return 'order-detail__badge order-detail__badge--paid'
-    if (s === 'CANCELLED') return 'order-detail__badge order-detail__badge--cancelled'
-    return 'order-detail__badge order-detail__badge--pending'
+    const map = {
+        PENDING:    'order-detail__badge--pending',
+        PAID:       'order-detail__badge--paid',
+        PROCESSING: 'order-detail__badge--processing',
+        SHIPPED:    'order-detail__badge--shipped',
+        DELIVERED:  'order-detail__badge--delivered',
+        CLOSED:     'order-detail__badge--closed',
+        CANCELLED:  'order-detail__badge--cancelled',
+    }
+    return `order-detail__badge ${map[s] ?? 'order-detail__badge--pending'}`
+}
+
+function ReturnModal({ order, token, onSuccess, onClose }) {
+    const [reason, setReason] = useState('')
+    const [selections, setSelections] = useState(() =>
+        Object.fromEntries(
+            (order.items ?? []).map(item => [
+                item.orderItemId,
+                { checked: false, qty: item.quantity },
+            ])
+        )
+    )
+    const [submitting, setSubmitting] = useState(false)
+    const [error, setError] = useState(null)
+
+    function toggleItem(id) {
+        setSelections(prev => ({
+            ...prev,
+            [id]: { ...prev[id], checked: !prev[id].checked },
+        }))
+    }
+
+    function setQty(id, val) {
+        setSelections(prev => ({
+            ...prev,
+            [id]: { ...prev[id], qty: val },
+        }))
+    }
+
+    async function handleSubmit() {
+        setError(null)
+        if (!reason.trim()) {
+            setError('Please describe the reason for your return.')
+            return
+        }
+        const items = (order.items ?? [])
+            .filter(item => selections[item.orderItemId]?.checked)
+            .map(item => ({
+                orderItemId: item.orderItemId,
+                quantity: Number(selections[item.orderItemId].qty),
+            }))
+        if (items.length === 0) {
+            setError('Please select at least one item to return.')
+            return
+        }
+        const invalidQty = items.find(i => {
+            const orig = (order.items ?? []).find(oi => oi.orderItemId === i.orderItemId)
+            return isNaN(i.quantity) || i.quantity < 1 || (orig && i.quantity > orig.quantity)
+        })
+        if (invalidQty) {
+            setError('Quantity must be between 1 and the original ordered amount.')
+            return
+        }
+        setSubmitting(true)
+        try {
+            await createReturn(token, order.id, { reason: reason.trim(), items })
+            onSuccess()
+        } catch (e) {
+            setError(e.message)
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    return (
+        <div className="order-detail__modal-overlay" onClick={onClose}>
+            <div className="order-detail__modal" onClick={e => e.stopPropagation()}>
+                <div className="order-detail__modal-header">
+                    <h2 className="order-detail__modal-title">Request a Return</h2>
+                    <button
+                        className="order-detail__modal-close"
+                        onClick={onClose}
+                        aria-label="Close"
+                    >✕</button>
+                </div>
+
+                {error && <div className="order-detail__modal-error">{error}</div>}
+
+                <div className="order-detail__modal-body">
+                    <label className="order-detail__modal-label">
+                        Reason <span aria-hidden="true">*</span>
+                    </label>
+                    <textarea
+                        className="order-detail__modal-textarea"
+                        placeholder="Describe why you're returning…"
+                        value={reason}
+                        onChange={e => setReason(e.target.value)}
+                        rows={3}
+                    />
+
+                    <div className="order-detail__modal-label order-detail__modal-label--mt">
+                        Items to return <span aria-hidden="true">*</span>
+                    </div>
+                    <ul className="order-detail__return-items">
+                        {(order.items ?? []).map(item => {
+                            const sel = selections[item.orderItemId] ?? { checked: false, qty: item.quantity }
+                            return (
+                                <li key={item.orderItemId} className="order-detail__return-item">
+                                    <label className="order-detail__return-check">
+                                        <input
+                                            type="checkbox"
+                                            checked={sel.checked}
+                                            onChange={() => toggleItem(item.orderItemId)}
+                                        />
+                                        <span>{item.productName}</span>
+                                    </label>
+                                    <div className="order-detail__return-qty">
+                                        <span className="order-detail__return-qty-label">Qty:</span>
+                                        <input
+                                            type="number"
+                                            className="order-detail__return-qty-input"
+                                            min={1}
+                                            max={item.quantity}
+                                            value={sel.qty}
+                                            onChange={e => setQty(item.orderItemId, e.target.value)}
+                                            disabled={!sel.checked}
+                                        />
+                                        <span className="order-detail__return-qty-max">/ {item.quantity}</span>
+                                    </div>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
+
+                <div className="order-detail__modal-footer">
+                    <button
+                        className="order-detail__modal-cancel"
+                        onClick={onClose}
+                        disabled={submitting}
+                    >Cancel</button>
+                    <button
+                        className="order-detail__modal-submit"
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                    >{submitting ? 'Submitting…' : 'Submit Return'}</button>
+                </div>
+            </div>
+        </div>
+    )
 }
 
 export default function OrderDetailPage({ onNeedAuth, userName }) {
@@ -32,6 +179,8 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const token = localStorage.getItem('token')
+    const [modalOpen, setModalOpen] = useState(false)
+    const [returnSubmitted, setReturnSubmitted] = useState(false)
 
     async function loadOrder(id) {
         if (!token) {
@@ -127,7 +276,22 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                     <h1 className="order-detail__title">Order #{order.id}</h1>
                     <p className="order-detail__placed">Placed on {formatDate(order.createdAt)}</p>
                 </div>
-                <span className={statusClass(order.status)}>{order.status}</span>
+                <div className="order-detail__header-right">
+                    <span className={statusClass(order.status)}>{order.status}</span>
+                    {order.status === 'DELIVERED' && !returnSubmitted && (
+                        <button
+                            className="order-detail__return-btn"
+                            onClick={() => setModalOpen(true)}
+                        >
+                            ↩ Return
+                        </button>
+                    )}
+                    {returnSubmitted && (
+                        <span className="order-detail__badge order-detail__badge--return-requested">
+                            Return Requested
+                        </span>
+                    )}
+                </div>
             </header>
 
             <section className="order-detail-summary" aria-labelledby="order-summary-heading">
@@ -167,7 +331,7 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                             </thead>
                             <tbody>
                                 {items.map((line) => (
-                                    <tr key={`${line.productId}-${line.productName}`}>
+                                    <tr key={line.orderItemId}>
                                         <td className="order-detail-table__name">{line.productName}</td>
                                         <td className="order-detail-table__num">{formatMoney(line.unitPrice)}</td>
                                         <td className="order-detail-table__num">{line.quantity}</td>
@@ -181,6 +345,15 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                     </div>
                 )}
             </section>
+
+            {modalOpen && (
+                <ReturnModal
+                    order={order}
+                    token={token}
+                    onSuccess={() => { setModalOpen(false); setReturnSubmitted(true) }}
+                    onClose={() => setModalOpen(false)}
+                />
+            )}
         </div>
     )
 }
