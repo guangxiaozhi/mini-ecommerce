@@ -64,15 +64,39 @@
 }
 
 .order-detail__badge--paid {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.order-detail__badge--processing {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+.order-detail__badge--shipped {
+    background: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #c4b5fd;
+}
+
+.order-detail__badge--delivered {
     background: #d1fae5;
     color: #065f46;
     border: 1px solid #6ee7b7;
 }
 
-.order-detail__badge--cancelled {
+.order-detail__badge--closed {
     background: #f3f4f6;
-    color: #6b7280;
-    border: 1px solid #e5e7eb;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.order-detail__badge--cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
 }
 
 /* Summary */

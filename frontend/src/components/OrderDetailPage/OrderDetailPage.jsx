@@ -21,9 +21,16 @@ function formatDate(iso) {
 
 function statusClass(status) {
     const s = String(status || '').toUpperCase()
-    if (s === 'PAID') return 'order-detail__badge order-detail__badge--paid'
-    if (s === 'CANCELLED') return 'order-detail__badge order-detail__badge--cancelled'
-    return 'order-detail__badge order-detail__badge--pending'
+    const map = {
+        PENDING:    'order-detail__badge--pending',
+        PAID:       'order-detail__badge--paid',
+        PROCESSING: 'order-detail__badge--processing',
+        SHIPPED:    'order-detail__badge--shipped',
+        DELIVERED:  'order-detail__badge--delivered',
+        CLOSED:     'order-detail__badge--closed',
+        CANCELLED:  'order-detail__badge--cancelled',
+    }
+    return `order-detail__badge ${map[s] ?? 'order-detail__badge--pending'}`
 }
 
 export default function OrderDetailPage({ onNeedAuth, userName }) {
