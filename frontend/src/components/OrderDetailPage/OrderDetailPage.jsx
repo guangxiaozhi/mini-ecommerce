@@ -78,7 +78,7 @@ function ReturnModal({ order, token, onSuccess, onClose }) {
         }
         const invalidQty = items.find(i => {
             const orig = (order.items ?? []).find(oi => oi.orderItemId === i.orderItemId)
-            return i.quantity < 1 || (orig && i.quantity > orig.quantity)
+            return isNaN(i.quantity) || i.quantity < 1 || (orig && i.quantity > orig.quantity)
         })
         if (invalidQty) {
             setError('Quantity must be between 1 and the original ordered amount.')
