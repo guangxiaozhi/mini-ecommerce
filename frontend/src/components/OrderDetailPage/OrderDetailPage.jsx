@@ -76,6 +76,14 @@ function ReturnModal({ order, token, onSuccess, onClose }) {
             setError('Please select at least one item to return.')
             return
         }
+        const invalidQty = items.find(i => {
+            const orig = (order.items ?? []).find(oi => oi.orderItemId === i.orderItemId)
+            return i.quantity < 1 || (orig && i.quantity > orig.quantity)
+        })
+        if (invalidQty) {
+            setError('Quantity must be between 1 and the original ordered amount.')
+            return
+        }
         setSubmitting(true)
         try {
             await createReturn(token, order.id, { reason: reason.trim(), items })
