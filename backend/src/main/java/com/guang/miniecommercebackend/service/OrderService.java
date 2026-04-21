@@ -259,4 +259,16 @@ public class OrderService {
         );
     }
 
+    @Transactional
+    public OrderDetailResponse payOrder(String username, Long orderId) {
+        User user = getUserByUsernameOr404(username);
+        Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order is not in PENDING status");
+        }
+        order.setStatus(OrderStatus.PAID);
+        orderRepository.save(order);
+        return getMyOrder(username, orderId);
+    }
 }

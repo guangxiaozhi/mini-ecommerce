@@ -1,6 +1,6 @@
 // 对应 /orders/:orderId（单条订单详情，显示单条订单及 items。）
 
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate} from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { getOrder, createReturn } from '../../api/orders.js'
 import './OrderDetailPage.css'
@@ -181,6 +181,7 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
     const token = localStorage.getItem('token')
     const [modalOpen, setModalOpen] = useState(false)
     const [returnSubmitted, setReturnSubmitted] = useState(false)
+    const navigate = useNavigate()
 
     async function loadOrder(id) {
         if (!token) {
@@ -278,6 +279,14 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                 </div>
                 <div className="order-detail__header-right">
                     <span className={statusClass(order.status)}>{order.status}</span>
+                    {order.status === 'PENDING' && (
+                        <button
+                            className="order-detail__return-btn"
+                            onClick={() => navigate(`/payment/${order.id}`)}
+                        >
+                            Pay Now
+                        </button>
+                    )}
                     {order.status === 'DELIVERED' && !returnSubmitted && (
                         <button
                             className="order-detail__return-btn"

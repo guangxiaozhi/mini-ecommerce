@@ -18,6 +18,7 @@ import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx";
 import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx";
 import OrderListPage from "./components/OrderListPage/OrderListPage.jsx";
 import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx";
+import PaymentPage from "./components/PaymentPage/PaymentPage.jsx";
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -258,6 +259,17 @@ function App() {
                     userName={userName}
                 />}
             />
+            <Route
+                path='/payment/:orderId'
+                element={
+                    <PaymentPage
+                        onNeedAuth={() => {
+                            setMsg('')
+                            setAuthOpen(true)
+                        }}
+                    />
+                }
+            />
         </Routes>
 
     </>
@@ -265,3 +277,10 @@ function App() {
 }
 
 export default App
+
+export function payOrder(token, orderId) {
+    return fetch(`${ORDERS_BASE}/${orderId}/pay`, {
+        method: 'POST',
+        headers: authHeaders(token),
+    }).then(handleResponse)
+}
