@@ -122,7 +122,7 @@ export default function Cart({ onCartUpdate, onNeedAuth, userName }) {
             const order = await checkout(token)
             setItems([])
             onCartUpdate(0)
-            navigate(`/orders/${order.id}`)
+            navigate(`/payment/${order.id}`)
         } catch (e) {
             const msg = String(e?.message ?? '')
             // Backend: "insufficient stock for product: <name>"

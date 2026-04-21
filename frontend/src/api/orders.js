@@ -32,3 +32,10 @@ export function createReturn(token, orderId, body) {
         body: JSON.stringify(body),
     }).then(handleResponse)
 }
+
+export function payOrder(token, orderId) {
+    return fetch(`${ORDERS_BASE}/${orderId}/pay`, {
+        method: 'POST',
+        headers: authHeaders(token),
+    }).then(handleResponse)
+}

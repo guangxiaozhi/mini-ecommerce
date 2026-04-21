@@ -45,4 +45,11 @@ public class OrderController {
         String username = (String) auth.getPrincipal();
         return orderService.createReturn(username, orderId, req);
     }
+
+    // Pay order — POST /api/orders/{orderId}/pay
+    @PostMapping("/{orderId}/pay")
+    public OrderDetailResponse payOrder(Authentication auth, @PathVariable Long orderId) {
+        String username = (String) auth.getPrincipal();
+        return orderService.payOrder(username, orderId);
+    }
 }
