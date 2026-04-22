@@ -32,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
@@ -141,16 +142,30 @@ public class OrderService {
         Order order = orderRepository.findByIdAndUserId(orderId, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "order not found"));
-        if (order.getStatus() != OrderStatus.DELIVERED) {
+
+        Set<OrderStatus> returnable = Set.of(
+                OrderStatus.PAID, OrderStatus.PROCESSING,
+                OrderStatus.SHIPPED, OrderStatus.DELIVERED
+        );
+        if (!returnable.contains(order.getStatus())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "returns are only allowed for DELIVERED orders");
+                    "returns are only allowed for this order status");
         }
         // Prevent duplicate active (non-rejected) return requests
         List<ReturnRequest> existing = returnRequestRepository
-                .findByOrderIdAndStatusNot(orderId, ReturnStatus.REJECTED);
+                .findByOrderIdAndStatus(orderId, ReturnStatus.REQUESTED);
         if (!existing.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "a return request already exists for this order");
+                    "a return request already pending for this order");
+        }
+        // Calculate already-approved returned quantities per orderItemId
+        Map<Long, Integer> approvedReturnedQty = new HashMap<>();
+        List<ReturnRequest> approvedReturns = returnRequestRepository
+                .findByOrderIdAndStatus(orderId, ReturnStatus.APPROVED);
+        for (ReturnRequest approved : approvedReturns) {
+            for (ReturnItem ai : returnItemRepository.findByReturnRequestId(approved.getId())) {
+                approvedReturnedQty.merge(ai.getOrderItemId(), ai.getQuantity(), Integer::sum);
+            }
         }
         ReturnRequest rr = new ReturnRequest();
         rr.setOrderId(orderId);
@@ -164,6 +179,14 @@ public class OrderService {
                     .findFirst()
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                             "order item not found: " + itemReq.getOrderItemId()));
+            // Quantity validation
+            int alreadyReturned = approvedReturnedQty.getOrDefault(oi.getId(), 0);
+            int remaining = oi.getQuantity() - alreadyReturned;
+            if (itemReq.getQuantity() < 1 || itemReq.getQuantity() > remaining) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "return quantity for '" + oi.getProductName() + "' exceeds returnable amount (" + remaining +
+                                "remaining)");
+            }
             ReturnItem ri = new ReturnItem();
             ri.setReturnRequestId(saved.getId());
             ri.setOrderItemId(oi.getId());
@@ -250,13 +273,20 @@ public class OrderService {
 
     //写 toDetail
     private OrderDetailResponse toDetail(Order o){
-        return new OrderDetailResponse(
+        OrderDetailResponse resp = new OrderDetailResponse(
                 o.getId(),
                 o.getTotalAmount(),
                 o.getStatus().name(),
                 o.getCreatedAt(),
                 o.getItems().stream().map(this::toOrderItemResponse).toList()
         );
+        List<ReturnRequest> returns = returnRequestRepository.findByOrderId(o.getId());
+        List<ReturnRequestResponse> returnResponses = returns.stream().map(rr -> {
+            List<ReturnItem> ritems = returnItemRepository.findByReturnRequestId(rr.getId());
+            return toReturnResponse(rr, ritems, null);
+        }).toList();
+        resp.setReturnRequests(returnResponses);
+        return resp;
     }
 
     @Transactional

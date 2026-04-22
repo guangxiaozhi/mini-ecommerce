@@ -13,6 +13,7 @@ public interface ReturnRequestRepository extends JpaRepository<ReturnRequest, Lo
 
     Page<ReturnRequest> findByStatus(ReturnStatus status, Pageable pageable);
     List<ReturnRequest> findByOrderId(Long orderId);
+    List<ReturnRequest> findByOrderIdAndStatus(Long orderId, ReturnStatus status);
     List<ReturnRequest> findByRequestedAtBetween(LocalDateTime from, LocalDateTime to);
 
     // Check if an active (non-rejected) return already exists for an order

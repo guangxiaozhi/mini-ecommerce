@@ -265,7 +265,34 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
     }
 
     const items = order.items ?? []
+    const returnRows = (order.returnRequests ?? []).flatMap((rr) => {
+        let badgeMod, statusLabel, details
+        if (rr.status === 'REQUESTED') { badgeMod = 'return-pending';  statusLabel = 'Pending' }
+        if (rr.status === 'APPROVED')  { badgeMod = 'return-approved'; statusLabel = 'Approved' }
+        if (rr.status === 'REFUNDED')  { badgeMod = 'return-refunded'; statusLabel = 'Refunded'}
+        if (rr.status === 'REJECTED')  { badgeMod = 'return-rejected'; statusLabel = 'Rejected' }
 
+        details = rr.status === 'REFUNDED'
+            ? `Refunded on ${formatDate(rr.resolvedAt)}`
+            : rr.status === 'APPROVED'
+            ? `Approved on ${formatDate(rr.resolvedAt)}`
+            : rr.status === 'REJECTED'
+            ? (rr.reason ?? '—')
+            : `Reason: ${rr.reason ?? '—'}`
+
+        return (rr.items ?? []).map((ri, j) => (
+            <tr key={`${rr.id}-${ri.orderItemId}`}>
+                <td className="order-detail-table__name">{ri.productName}</td>
+                <td className="order-detail-table__num">{ri.quantity}</td>
+                <td className="order-detail-table__num">
+                  <span className={`order-detail__badge order-detail__badge--${badgeMod}`}>
+                      {statusLabel}
+                  </span>
+                </td>
+                <td className="order-detail-table__num">{j === 0 ? details : ''}</td>
+            </tr>
+        ))
+    })
     return (
         <div className="order-detail-page">
             <Link to="/orders" className="order-detail__back">
@@ -287,7 +314,8 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                             Pay Now
                         </button>
                     )}
-                    {order.status === 'DELIVERED' && !returnSubmitted && (
+                    {['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status) &&
+                        !(order.returnRequests ?? []).some(rr => rr.status === 'REQUESTED') && (
                         <button
                             className="order-detail__return-btn"
                             onClick={() => setModalOpen(true)}
@@ -354,7 +382,26 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                     </div>
                 )}
             </section>
-
+            {(order.returnRequests ?? []).length > 0 && (
+                <section className="order-detail-items" aria-labelledby="returns-heading">
+                    <h2 id="returns-heading" className="order-detail-items__title">
+                        Returns ({order.returnRequests.length})
+                    </h2>
+                    <div className="order-detail-table-wrap">
+                        <table className="order-detail-table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Product</th>
+                                <th scope="col" className="order-detail-table__num">Returned Qty</th>
+                                <th scope="col" className="order-detail-table__num">Status</th>
+                                <th scope="col" className="order-detail-table__num">Details</th>
+                            </tr>
+                            </thead>
+                            <tbody>{returnRows}</tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
             {modalOpen && (
                 <ReturnModal
                     order={order}
