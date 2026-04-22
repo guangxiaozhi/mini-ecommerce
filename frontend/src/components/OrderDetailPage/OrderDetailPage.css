@@ -542,3 +542,13 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.order-detail__badge--return-pending  { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.order-detail__badge--return-approved { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+.order-detail__badge--return-rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.order-detail__badge--return-refunded { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+/* add margin-top to Returns section */
+.order-detail-items + .order-detail-items {
+    margin-top: 1.5rem;
+}

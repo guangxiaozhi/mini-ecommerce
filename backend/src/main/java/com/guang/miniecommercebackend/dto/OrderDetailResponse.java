@@ -1,7 +1,9 @@
 package com.guang.miniecommercebackend.dto;
 
+import com.guang.miniecommercebackend.dto.ReturnRequestResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /** 单个订单详情（含行明细）。 */
@@ -11,6 +13,7 @@ public class OrderDetailResponse {
     private String status;
     private LocalDateTime createdAt;
     private List<OrderItemResponse> items;
+    private List<ReturnRequestResponse> returnRequests = new ArrayList<>();
 
     public OrderDetailResponse() {}
 
@@ -37,4 +40,7 @@ public class OrderDetailResponse {
 
     public List<OrderItemResponse> getItems() { return items; }
     public void setItems(List<OrderItemResponse> items) { this.items = items; }
+
+    public List<ReturnRequestResponse> getReturnRequests(){return returnRequests;}
+    public void setReturnRequests(List<ReturnRequestResponse> r){this.returnRequests = r;}
 }
