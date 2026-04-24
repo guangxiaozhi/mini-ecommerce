@@ -268,12 +268,27 @@ public class OrderService {
     }
 
     //写 toSummary
+
+
     private OrderSummaryResponse toSummary(Order o){
+        List<ReturnRequest> returns = returnRequestRepository.findByOrderId(o.getId());
+
+        String returnStatus = null;
+        if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.REQUESTED)) {
+            returnStatus = "REQUESTED";
+        } else if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.APPROVED)) {
+            returnStatus = "APPROVED";
+        } else if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.REFUNDED)) {
+            returnStatus = "REFUNDED";
+        } else if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.REJECTED)) {
+            returnStatus = "REJECTED";
+        }
         return new OrderSummaryResponse(
                 o.getId(),
                 o.getTotalAmount(),
                 o.getStatus().name(),
-                o.getCreatedAt()
+                o.getCreatedAt(),
+                returnStatus
         );
     }
 

@@ -31,6 +31,18 @@ function statusClass(status) {
     return `orders-card__badge ${map[s] ?? 'orders-card__badge--pending'}`
 }
 
+// 后端 JSON 里是 REQUESTED 这类枚举名，列表上显示成可读英文（和详情页「Requested」一致）。
+function returnStatusLabel(code) {
+    const key = String(code || '').toUpperCase()
+    const map = {
+        REQUESTED: 'Requested',
+        APPROVED: 'Approved',
+        REFUNDED: 'Refunded',
+        REJECTED: 'Rejected',
+    }
+    return map[key] ?? (code || '—')
+}
+
 const STATUS_FILTERS = [
     { key: 'ALL', label: 'All' },
     { key: 'PENDING', label: 'Pending' },
@@ -170,6 +182,11 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                                         <p className="orders-card__total">{formatMoney(o.totalAmount)}</p>
                                     </div>
                                 </div>
+                                {o.returnStatus ? (
+                                    <p className="orders-card__return-hint">
+                                        Return: {returnStatusLabel(o.returnStatus)}
+                                    </p>
+                                ) : null}
                                 <div className="orders-card__actions">
                                     <Link className="orders-card__link" to={`/orders/${o.id}`}>
                                         View order details →

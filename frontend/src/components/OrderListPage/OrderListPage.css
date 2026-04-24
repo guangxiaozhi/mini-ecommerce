@@ -315,6 +315,13 @@
     }
 }
 
+.orders-card__return-hint {
+    margin: 0.65rem 0 0;
+    font-size: 0.82rem;
+    color: #9ca3af;
+    line-height: 1.35;
+}
+
 .orders-filters {
     display: flex;
     flex-wrap: wrap;
