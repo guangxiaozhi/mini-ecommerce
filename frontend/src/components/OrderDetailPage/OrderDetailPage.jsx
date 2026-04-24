@@ -180,7 +180,6 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
     const [error, setError] = useState(null)
     const token = localStorage.getItem('token')
     const [modalOpen, setModalOpen] = useState(false)
-    const [returnSubmitted, setReturnSubmitted] = useState(false)
     const navigate = useNavigate()
 
     async function loadOrder(id) {
@@ -265,9 +264,28 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
     }
 
     const items = order.items ?? []
-    const returnRows = (order.returnRequests ?? []).flatMap((rr) => {
+    const returnRequests = order.returnRequests ?? []
+
+    let returnBadgeText = null
+    let returnBadgeClass = null
+
+    if (returnRequests.some((rr) => rr.status === 'REQUESTED')) {
+        returnBadgeText = 'Return Requested'
+        returnBadgeClass = 'order-detail__badge--return-requested'
+    } else if (returnRequests.some((rr) => rr.status === 'APPROVED')) {
+        returnBadgeText = 'Return Approved'
+        returnBadgeClass = 'order-detail__badge--return-approved'
+    } else if (returnRequests.some((rr) => rr.status === 'REFUNDED')) {
+        returnBadgeText = 'Refunded'
+        returnBadgeClass = 'order-detail__badge--return-refunded'
+    } else if (returnRequests.some((rr) => rr.status === 'REJECTED')) {
+        returnBadgeText = 'Return Rejected'
+        returnBadgeClass = 'order-detail__badge--return-rejected'
+    }
+
+    const returnRows = returnRequests.flatMap((rr) => {
         let badgeMod, statusLabel, details
-        if (rr.status === 'REQUESTED') { badgeMod = 'return-pending';  statusLabel = 'Pending' }
+        if (rr.status === 'REQUESTED') { badgeMod = 'return-requested';  statusLabel = 'Requested' }
         if (rr.status === 'APPROVED')  { badgeMod = 'return-approved'; statusLabel = 'Approved' }
         if (rr.status === 'REFUNDED')  { badgeMod = 'return-refunded'; statusLabel = 'Refunded'}
         if (rr.status === 'REJECTED')  { badgeMod = 'return-rejected'; statusLabel = 'Rejected' }
@@ -306,6 +324,11 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                 </div>
                 <div className="order-detail__header-right">
                     <span className={statusClass(order.status)}>{order.status}</span>
+                    {returnBadgeText && (
+                        <span className={`order-detail__badge ${returnBadgeClass}`}>
+                            {returnBadgeText}
+                        </span>
+                    )}
                     {order.status === 'PENDING' && (
                         <button
                             className="order-detail__return-btn"
@@ -323,11 +346,7 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                             ↩ Return
                         </button>
                     )}
-                    {returnSubmitted && (
-                        <span className="order-detail__badge order-detail__badge--return-requested">
-                            Return Requested
-                        </span>
-                    )}
+
                 </div>
             </header>
 
@@ -402,12 +421,16 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                     </div>
                 </section>
             )}
+{/*         提交 return 成功后刷新当前订单数据 */}
             {modalOpen && (
                 <ReturnModal
-                    order={order}
-                    token={token}
-                    onSuccess={() => { setModalOpen(false); setReturnSubmitted(true) }}
-                    onClose={() => setModalOpen(false)}
+                  order={order}
+                  token={token}
+                  onSuccess={async () => {
+                    setModalOpen(false)
+                    await loadOrder(orderId)
+                  }}
+                  onClose={() => setModalOpen(false)}
                 />
             )}
         </div>
