@@ -210,10 +210,16 @@ public class OrderService {
 
     //订单列表
     @Transactional(readOnly = true)
-    public List<OrderSummaryResponse> listMyOrders(String username){
+    public List<OrderSummaryResponse> listMyOrders(String username, OrderStatus status){
         User user = getUserByUsernameOr404(username);
-        return orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
-                .stream().map(this::toSummary).toList();
+        List<Order> orders;
+        if (status == null) {
+            orders = orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        } else {
+            orders = orderRepository.findByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), status);
+        }
+
+        return orders.stream().map(this::toSummary).toList();
     }
 
     private ReturnRequestResponse toReturnResponse(ReturnRequest rr,
