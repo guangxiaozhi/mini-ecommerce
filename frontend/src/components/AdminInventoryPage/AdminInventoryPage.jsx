@@ -443,6 +443,18 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefresh
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [listRefreshKey])
 
+    //  items 是当前筛选结果
+    //  selectedId 是右侧详情正在看的商品
+    //  筛选变化后，如果该商品不在 items 里，右侧继续显示会造成“左空右有”的语义冲突
+    //  所以自动清空是最自然的交互。
+    useEffect(() => {
+        if (selectedId == null) return
+        const stillExists = items.some(item => item.productId === selectedId)
+        if (!stillExists) {
+            onSelect(null)
+        }
+    }, [items, selectedId, onSelect])
+
     function handleSearch(e) {
         e.preventDefault()
         load(keyword, lowStock)
