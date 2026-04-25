@@ -128,6 +128,11 @@ public class OrderService {
                     .filter(ci -> ci.getProduct().getId().equals(productId))
                     .mapToInt(CartItem::getQuantity)
                     .sum();
+            //  checkout 时 allocate
+            //
+            //  用户下单（还没发货）时，把库存从 available 挪到 allocated
+            //  目的是“锁货”，防止超卖
+            //  不是实际出库
             inventoryService.allocate(productId, qty, saved.getId());
         }
         // 先扣库存再清空购物车
