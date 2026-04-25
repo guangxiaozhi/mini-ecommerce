@@ -230,8 +230,8 @@ function MovementsTable({ token, productId }) {
                 <div className="aip-state">No movements recorded.</div>
             ) : (
                 <>
-                    <div className="aip-table-wrap">
-                        <table className="aip-table">
+                    <div className="aip-table-wrap aip-table-wrap--movements">
+                        <table className="aip-table aip-table--movements">
                             <thead>
                                 <tr>
                                     <th>Date</th>
