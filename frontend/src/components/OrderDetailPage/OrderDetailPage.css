@@ -576,3 +576,27 @@
     color: #b91c1c;
     border: 1px solid #fecaca;
 }
+
+.order-detail__header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+}
+
+.order-detail__header-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.order-detail__status-hint {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #9ca3af;
+    line-height: 1.35;
+    text-align: right;
+    max-width: 20rem;
+}

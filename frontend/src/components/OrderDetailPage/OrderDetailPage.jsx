@@ -323,30 +323,38 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                     <p className="order-detail__placed">Placed on {formatDate(order.createdAt)}</p>
                 </div>
                 <div className="order-detail__header-right">
-                    <span className={statusClass(order.status)}>{order.status}</span>
-                    {returnBadgeText && (
-                        <span className={`order-detail__badge ${returnBadgeClass}`}>
-                            {returnBadgeText}
-                        </span>
+                    <div className="order-detail__header-actions">
+                        <span className={statusClass(order.status)}>{order.status}</span>
+                                            {returnBadgeText && (
+                                                <span className={`order-detail__badge ${returnBadgeClass}`}>
+                                                    {returnBadgeText}
+                                                </span>
+                                            )}
+                                            {order.status === 'PENDING' && (
+                                                <button
+                                                    className="order-detail__return-btn"
+                                                    onClick={() => navigate(`/payment/${order.id}`)}
+                                                >
+                                                    Pay Now
+                                                </button>
+                                            )}
+                                            {['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status) &&
+                                                !(order.returnRequests ?? []).some(rr => rr.status === 'REQUESTED') && (
+                                                <button
+                                                    className="order-detail__return-btn"
+                                                    onClick={() => setModalOpen(true)}
+                                                >
+                                                    ↩ Return
+                                                </button>
+                                            )}
+                    </div>
+                    {(order.status === 'CLOSED' || order.status === 'CANCELLED') && (
+                        <p className="order-detail__status-hint" role="status">
+                            {order.status === 'CLOSED'
+                                ? 'This order is closed.'
+                                : 'This order was cancelled.'}
+                        </p>
                     )}
-                    {order.status === 'PENDING' && (
-                        <button
-                            className="order-detail__return-btn"
-                            onClick={() => navigate(`/payment/${order.id}`)}
-                        >
-                            Pay Now
-                        </button>
-                    )}
-                    {['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status) &&
-                        !(order.returnRequests ?? []).some(rr => rr.status === 'REQUESTED') && (
-                        <button
-                            className="order-detail__return-btn"
-                            onClick={() => setModalOpen(true)}
-                        >
-                            ↩ Return
-                        </button>
-                    )}
-
                 </div>
             </header>
 
