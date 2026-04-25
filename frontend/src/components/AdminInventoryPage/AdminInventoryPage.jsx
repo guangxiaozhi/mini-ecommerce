@@ -32,11 +32,21 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
             setError('Qty must be a positive number.')
             return
         }
+        if (unitCost === '' || Number.isNaN(Number(unitCost))) {
+            setError('Unit cost is required.')
+            return
+        }
+        if (Number(unitCost) <= 0) {
+            setError('Unit cost must be greater than 0.')
+            return
+        }
         setSubmitting(true)
         setError(null)
         try {
-            const body = { qty: Number(qty) }
-            if (unitCost !== '') body.unitCost = Number(unitCost)
+            const body = {
+                qty: Number(qty),
+                unitCost: Number(unitCost),
+            }
             if (note.trim()) body.note = note.trim()
             await adminReceiveStock(token, productId, body)
             setQty('')
@@ -68,7 +78,7 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
                     />
                 </label>
                 <label className="aip-label">
-                    Unit Cost ($)
+                    Unit Cost ($) *
                     <input
                         className="aip-input"
                         type="number"
@@ -76,7 +86,7 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
                         step="0.01"
                         value={unitCost}
                         onChange={e => setUnitCost(e.target.value)}
-                        placeholder="optional"
+                        placeholder="required"
                     />
                 </label>
             </div>
