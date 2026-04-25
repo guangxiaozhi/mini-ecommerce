@@ -19,7 +19,7 @@ function fmtDate(str) {
 
 // ── Receive Stock Form ─────────────────────────────────────────────────────
 
-function ReceiveStockForm({ token, productId, onSuccess }) {
+function ReceiveStockForm({ token, productId, sellingPrice, onSuccess }) {
     const [qty, setQty] = useState('')
     const [unitCost, setUnitCost] = useState('')
     const [note, setNote] = useState('')
@@ -38,6 +38,10 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
         }
         if (Number(unitCost) <= 0) {
             setError('Unit cost must be greater than 0.')
+            return
+        }
+        if (sellingPrice != null && Number(unitCost) > Number(sellingPrice)) {
+            setError('Unit cost cannot exceed selling price.')
             return
         }
         setSubmitting(true)
@@ -352,7 +356,13 @@ function DetailPanel({ token, productId, inventory, onStockChanged }) {
             )}
 
             <div className="aip-forms-row">
-                <ReceiveStockForm key={`recv-${productId}-${refreshKey}`} token={token} productId={productId} onSuccess={handleSuccess} />
+                <ReceiveStockForm
+                  key={`recv-${productId}-${refreshKey}`}
+                  token={token}
+                  productId={productId}
+                  sellingPrice={inventory?.sellingPrice}
+                  onSuccess={handleSuccess}
+                />
                 <AdjustStockForm key={`adj-${productId}-${refreshKey}`} token={token} productId={productId} onSuccess={handleSuccess} />
             </div>
 
