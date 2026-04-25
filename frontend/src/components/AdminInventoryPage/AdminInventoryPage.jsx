@@ -239,6 +239,8 @@ function MovementsTable({ token, productId }) {
                                     <th className="aip-num">Qty Change</th>
                                     <th className="aip-num">Unit Cost</th>
                                     <th className="aip-num">On Hand After</th>
+                                    <th className="aip-num">Allocated After</th>
+                                    <th className="aip-num">Available After</th>
                                     <th>Reference</th>
                                     <th>Note</th>
                                 </tr>
@@ -261,6 +263,8 @@ function MovementsTable({ token, productId }) {
                                                 : '—'}
                                         </td>
                                         <td className="aip-num">{m.onHandAfter}</td>
+                                        <td className="aip-num">{m.allocatedAfter}</td>
+                                        <td className="aip-num">{m.availableAfter}</td>
                                         <td className="aip-ref">
                                             {m.referenceType ? `${m.referenceType}${m.referenceId ? ' #' + m.referenceId : ''}` : '—'}
                                         </td>
