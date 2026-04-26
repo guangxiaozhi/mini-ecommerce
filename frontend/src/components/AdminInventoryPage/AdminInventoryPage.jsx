@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
     adminListInventory,
     adminGetMovements,
@@ -439,9 +439,11 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefresh
     const [error, setError] = useState(null)
     const [keyword, setKeyword] = useState('')
     const [lowStock, setLowStock] = useState('')
+    const fetchSeqRef = useRef(0)
 
     const load = useCallback(
         async (kw, ls) => {
+        const seq = ++fetchSeqRef.current
             setLoading(true)
             setError(null)
             try {
@@ -450,6 +452,7 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefresh
                 if (ls !== '' && !isNaN(Number(ls))) params.lowStock = Number(ls)
                 const data = await adminListInventory(token, params)
                 const arr = Array.isArray(data) ? data : []
+                if (seq !== fetchSeqRef.current) return
                 setItems(arr)
                 onItemsLoaded(arr)
             } catch (e) {
@@ -483,6 +486,15 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefresh
             onSelect(null)
         }
     }, [items, selectedId, onSelect])
+
+    // this hook makesure search is a dynamic search, 输入变化触发
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            load(keyword, lowStock)
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [keyword, lowStock, load])
 
     function handleSearch(e) {
         e.preventDefault()
