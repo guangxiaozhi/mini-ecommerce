@@ -58,7 +58,18 @@ function ReceiveStockForm({ token, productId, sellingPrice, onSuccess }) {
             setNote('')
             onSuccess()
         } catch (e) {
-            setError(e.message)
+//             e.status === 401 || e.status === 403
+//             -> 走“登录失效”流程（清 token、弹登录、或跳登录页）
+             if (e.status === 401 || e.status === 403) {
+                 setError('Session expired or permission denied. Please sign in again.')
+                 // 可选：localStorage.removeItem('token')
+                 // 可选：window.location.href = '/'
+             }
+//          其他错误
+//          -> 继续 setError(e.message) 普通提示
+             else {
+                 setError(e.message ?? 'Request failed')
+             }
         } finally {
             setSubmitting(false)
         }
@@ -139,7 +150,13 @@ function AdjustStockForm({ token, productId, onSuccess }) {
             setReason('')
             onSuccess()
         } catch (e) {
-            setError(e.message)
+            if (e.status === 401 || e.status === 403) {
+                setError('Session expired or permission denied. Please sign in again.')
+                // 可选：localStorage.removeItem('token')
+                // 可选：window.location.href = '/'
+            } else {
+                setError(e.message ?? 'Request failed')
+            }
         } finally {
             setSubmitting(false)
         }
@@ -199,7 +216,13 @@ function MovementsTable({ token, productId }) {
                 const result = await adminGetMovements(token, productId, p, 20)
                 setData(result)
             } catch (e) {
-                setError(e.message)
+                if (e.status === 401 || e.status === 403) {
+                    setError('Session expired or permission denied. Please sign in again.')
+                    // 可选：localStorage.removeItem('token')
+                    // 可选：window.location.href = '/'
+                } else {
+                    setError(e.message ?? 'Request failed')
+                }
             } finally {
                 setLoading(false)
             }
@@ -430,7 +453,13 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefresh
                 setItems(arr)
                 onItemsLoaded(arr)
             } catch (e) {
-                setError(e.message)
+                if (e.status === 401 || e.status === 403) {
+                    setError('Session expired or permission denied. Please sign in again.')
+                    // 可选：localStorage.removeItem('token')
+                    // 可选：window.location.href = '/'
+                } else {
+                    setError(e.message ?? 'Request failed')
+                }
             } finally {
                 setLoading(false)
             }
