@@ -163,20 +163,22 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "a return request already pending for this order");
         }
-        // Calculate already-approved returned quantities per orderItemId
-        Map<Long, Integer> approvedReturnedQty = new HashMap<>();
-        List<ReturnRequest> approvedReturns = returnRequestRepository
-                .findByOrderIdAndStatus(orderId, ReturnStatus.APPROVED);
-        for (ReturnRequest approved : approvedReturns) {
-            for (ReturnItem ai : returnItemRepository.findByReturnRequestId(approved.getId())) {
-                approvedReturnedQty.merge(ai.getOrderItemId(), ai.getQuantity(), Integer::sum);
+        // Quantities already tied to completed or approved returns (APPROVED + REFUNDED),
+        // so partial returns after refund still subtract correctly.
+        Map<Long, Integer> alreadyReturnedQty = new HashMap<>();
+        for (ReturnStatus st : List.of(ReturnStatus.APPROVED, ReturnStatus.REFUNDED)) {
+            List<ReturnRequest> list = returnRequestRepository.findByOrderIdAndStatus(orderId, st);
+            for (ReturnRequest rr : list) {
+                for (ReturnItem ai : returnItemRepository.findByReturnRequestId(rr.getId())) {
+                    alreadyReturnedQty.merge(ai.getOrderItemId(), ai.getQuantity(), Integer::sum);
+                }
             }
         }
-        ReturnRequest rr = new ReturnRequest();
-        rr.setOrderId(orderId);
-        rr.setUserId(user.getId());
-        rr.setReason(req.getReason());
-        ReturnRequest saved = returnRequestRepository.save(rr);
+        ReturnRequest existingReturn = new ReturnRequest();
+        existingReturn.setOrderId(orderId);
+        existingReturn.setUserId(user.getId());
+        existingReturn.setReason(req.getReason());
+        ReturnRequest saved = returnRequestRepository.save(existingReturn);
 
         for (ReturnItemRequest itemReq : req.getItems()) {
             OrderItem oi = order.getItems().stream()
@@ -185,7 +187,7 @@ public class OrderService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                             "order item not found: " + itemReq.getOrderItemId()));
             // Quantity validation
-            int alreadyReturned = approvedReturnedQty.getOrDefault(oi.getId(), 0);
+            int alreadyReturned = alreadyReturnedQty.getOrDefault(oi.getId(), 0);
             int remaining = oi.getQuantity() - alreadyReturned;
             if (itemReq.getQuantity() < 1 || itemReq.getQuantity() > remaining) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
