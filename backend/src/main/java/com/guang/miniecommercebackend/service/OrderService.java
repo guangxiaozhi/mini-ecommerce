@@ -7,6 +7,10 @@ import com.guang.miniecommercebackend.dto.OrderSummaryResponse;
 import com.guang.miniecommercebackend.dto.ReturnItemRequest;
 import com.guang.miniecommercebackend.dto.ReturnItemResponse;
 import com.guang.miniecommercebackend.dto.ReturnRequestResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.guang.miniecommercebackend.repository.OrderRepository;
 import com.guang.miniecommercebackend.repository.ReturnItemRepository;
@@ -217,16 +221,17 @@ public class OrderService {
 
     //订单列表
     @Transactional(readOnly = true)
-    public List<OrderSummaryResponse> listMyOrders(String username, OrderStatus status){
+    public Page<OrderSummaryResponse> listMyOrders(String username, OrderStatus status, int page, int size){
         User user = getUserByUsernameOr404(username);
-        List<Order> orders;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Order> ordersPage;
         if (status == null) {
-            orders = orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+            ordersPage = orderRepository.findByUserId(user.getId(), pageable);
         } else {
-            orders = orderRepository.findByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), status);
+            ordersPage = orderRepository.findByUserIdAndStatus(user.getId(), status, pageable);
         }
 
-        return orders.stream().map(this::toSummary).toList();
+        return ordersPage.map(this::toSummary);
     }
 
     private ReturnRequestResponse toReturnResponse(ReturnRequest rr,

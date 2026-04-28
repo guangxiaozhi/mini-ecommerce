@@ -13,9 +13,12 @@ function authHeaders(token) {
     return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
 
-export function listOrders(token, status){
-    const url = status ? `${ORDERS_BASE}?status=${encodeURIComponent(status)}` : ORDERS_BASE
-    return fetch(url, { headers: authHeaders(token) }).then(handleResponse)
+export function listOrders(token, status, page = 0, size = 10) {
+  const params = new URLSearchParams()
+  if (status) params.append('status', status)
+  params.append('page', page)
+  params.append('size', size)
+  return fetch(`${ORDERS_BASE}?${params.toString()}`, { headers: authHeaders(token) }).then(handleResponse)
 }
 
 export function getOrder(token, orderId){

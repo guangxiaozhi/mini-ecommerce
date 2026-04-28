@@ -59,6 +59,8 @@ export default function OrderListPage({ onNeedAuth, userName }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [statusFilter, setStatusFilter] = useState('ALL')
+    const [page, setPage] = useState(0)
+    const [totalPages, setTotalPages] = useState(1)
     const token = localStorage.getItem('token')
 
     async function loadOrders() {
@@ -71,8 +73,10 @@ export default function OrderListPage({ onNeedAuth, userName }) {
         setError(null)
         try {
             const statusParam = statusFilter === 'ALL' ? undefined : statusFilter
-            const ordersList = await listOrders(token, statusParam)
-            setOrders(ordersList)
+            const data = await listOrders(token, statusParam, page, 10)
+            setOrders(data?.content ?? [])
+//             setOrders(Array.isArray(data) ? data : [])
+            setTotalPages(data?.totalPages ?? 1)
         } catch (e) {
             setError(e.message ?? 'Failed to load the orders')
         } finally {
@@ -82,7 +86,7 @@ export default function OrderListPage({ onNeedAuth, userName }) {
 
     useEffect(() => {
         loadOrders()
-    }, [userName, statusFilter])
+    }, [userName, statusFilter, page])
 
     if (!token) {
         return (
@@ -139,7 +143,9 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                                 key={f.key}
                                 type="button"
                                 className={`orders-filters__chip ${statusFilter === f.key ? 'is-active' : ''}`}
-                                onClick={() => setStatusFilter(f.key)}
+                                onClick={() => {
+                                    setPage(0)
+                                    setStatusFilter(f.key)}}
                             >
                                 {f.label}
                             </button>
@@ -161,6 +167,7 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                     </Link>
                 </div>
             ) : (
+                <>
                 <ul className="orders-list">
                     {orders.map((o) => (
                         <li key={o.id}>
@@ -196,6 +203,32 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                         </li>
                     ))}
                 </ul>
+                {totalPages > 1 && (
+                  <div className="orders-pagination">
+                    <button
+                      type="button"
+                      className="orders-pagination__btn"
+                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                    >
+                      Prev
+                    </button>
+
+                    <span className="orders-pagination__info">
+                      Page {page + 1} / {totalPages}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="orders-pagination__btn"
+                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={page >= totalPages - 1}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+            </>
             )}
         </div>
     )

@@ -1,6 +1,7 @@
 package com.guang.miniecommercebackend.controller;
 
 import com.guang.miniecommercebackend.entity.OrderStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.guang.miniecommercebackend.service.OrderService;
@@ -25,8 +26,9 @@ public class OrderController {
 
     //  订单列表 - GET /api/orders
     @GetMapping
-    public List<OrderSummaryResponse> getOrders(Authentication auth,
-                                                @RequestParam(required = false) String status){
+    public Page<OrderSummaryResponse> getOrders(Authentication auth,
+                                                @RequestParam(required = false) String status, @RequestParam(defaultValue = "0") int page,
+                                                @RequestParam(defaultValue = "10") int size){
         String username = (String) auth.getPrincipal();
 
         OrderStatus orderStatus = null;
@@ -38,7 +40,7 @@ public class OrderController {
             }
         }
 
-        return orderService.listMyOrders(username, orderStatus);
+        return orderService.listMyOrders(username, orderStatus, page, size);
     }
 
     //  订单详情 — GET /api/orders/{orderId}
