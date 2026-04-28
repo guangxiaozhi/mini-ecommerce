@@ -33,6 +33,27 @@ function statusClass(status) {
     return `order-detail__badge ${map[s] ?? 'order-detail__badge--pending'}`
 }
 
+function returnedQtyByOrderItem(order) {
+    const map = new Map()
+    for (const rr of order.returnRequests ?? []) {
+        if (rr.status === 'REJECTED') continue
+        for (const ri of rr.items ?? []) {
+            const id = ri.orderItemId
+            map.set(id, (map.get(id) || 0) + Number(ri.quantity || 0))
+        }
+    }
+    return map
+}
+
+function hasReturnableItems(order) {
+    const used = returnedQtyByOrderItem(order)
+    return (order.items ?? []).some((line) => {
+        const bought = Number(line.quantity || 0)
+        const usedQty = used.get(line.orderItemId) || 0
+        return bought > usedQty
+    })
+}
+
 function ReturnModal({ order, token, onSuccess, onClose }) {
     const [reason, setReason] = useState('')
     const [selections, setSelections] = useState(() =>
@@ -339,7 +360,8 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                                                 </button>
                                             )}
                                             {['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status) &&
-                                                !(order.returnRequests ?? []).some(rr => rr.status === 'REQUESTED') && (
+                                                !(order.returnRequests ?? []).some((rr) => rr.status === 'REQUESTED') &&
+                                                hasReturnableItems(order) && (
                                                 <button
                                                     className="order-detail__return-btn"
                                                     onClick={() => setModalOpen(true)}
