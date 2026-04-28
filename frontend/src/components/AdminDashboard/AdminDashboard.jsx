@@ -2,6 +2,7 @@
   import { adminListProducts } from '../../api/adminProducts'
   import {adminListUsers} from "../../api/adminUsers.js";
   import {adminGetAnalytics, adminListOrders} from "../../api/adminOrders.js";
+  import {adminListInventory} from "../../api/adminInventory.js";
   import {PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Legend} from "recharts";
   import './AdminDashboard.css'
 
@@ -10,6 +11,7 @@
       const [userCount, setUserCount] = useState('...')
       const [orderCount, setOrderCount] = useState('...')
       const [productChartData, setProductChartData] = useState([])
+      const [inventoryChartData, setInventoryChartData] = useState([])
       const [userChartData, setUserChartData] = useState([])
       const [orderChartData, serOrderChartData] = useState([])
       const token = useMemo(() => localStorage.getItem('token'), [])
@@ -50,6 +52,7 @@
                   setUserChartData(Object.entries(counts).map(([date, count]) => ({ date, count })))
               })
               .catch(() => setUserCount('?'))
+
           adminListOrders(token, {page:0, size:1})
               .then(data => setOrderCount(data ?.totalElements ?? 0))
               .catch(() => setOrderCount('?'))
@@ -64,6 +67,17 @@
                   )
               })
               .catch(() =>{})
+
+          adminListInventory(token)
+              .then(data =>{
+                  if (!Array.isArray(data)) return
+                  const chartData = [...data]
+                      .sort((a, b) => b.onHandQty - a.onHandQty)
+                      .slice(0, 10)
+                      .map(item =>({name: item.productName, qty: item.onHandQty
+                      }))
+                  setInventoryChartData(chartData)
+              })
       }, [token])
 
       const cards = [
@@ -130,6 +144,18 @@
                               <Tooltip />
                               <Legend />
                           </PieChart>
+                      </ResponsiveContainer>
+                  </div>
+
+                  <div className="ad-chart-box">
+                      <h3 className="ad-chart-title">Inventory Stock Levels</h3>
+                      <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={inventoryChartData}>
+                              <XAxis dataKey="name" tick={{fontSize:10}} interval={0}/>
+                              <YAxis allowDecimals={false}/>
+                              <Tooltip/>
+                              <Bar dataKey="qty" fill="#ef6c00" radius={[4,4,0,0]}/>
+                          </BarChart>
                       </ResponsiveContainer>
                   </div>
               </div>
