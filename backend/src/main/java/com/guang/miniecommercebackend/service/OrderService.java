@@ -7,6 +7,10 @@ import com.guang.miniecommercebackend.dto.OrderSummaryResponse;
 import com.guang.miniecommercebackend.dto.ReturnItemRequest;
 import com.guang.miniecommercebackend.dto.ReturnItemResponse;
 import com.guang.miniecommercebackend.dto.ReturnRequestResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.guang.miniecommercebackend.repository.OrderRepository;
 import com.guang.miniecommercebackend.repository.ReturnItemRepository;
@@ -163,20 +167,22 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "a return request already pending for this order");
         }
-        // Calculate already-approved returned quantities per orderItemId
-        Map<Long, Integer> approvedReturnedQty = new HashMap<>();
-        List<ReturnRequest> approvedReturns = returnRequestRepository
-                .findByOrderIdAndStatus(orderId, ReturnStatus.APPROVED);
-        for (ReturnRequest approved : approvedReturns) {
-            for (ReturnItem ai : returnItemRepository.findByReturnRequestId(approved.getId())) {
-                approvedReturnedQty.merge(ai.getOrderItemId(), ai.getQuantity(), Integer::sum);
+        // Quantities already tied to completed or approved returns (APPROVED + REFUNDED),
+        // so partial returns after refund still subtract correctly.
+        Map<Long, Integer> alreadyReturnedQty = new HashMap<>();
+        for (ReturnStatus st : List.of(ReturnStatus.APPROVED, ReturnStatus.REFUNDED)) {
+            List<ReturnRequest> list = returnRequestRepository.findByOrderIdAndStatus(orderId, st);
+            for (ReturnRequest rr : list) {
+                for (ReturnItem ai : returnItemRepository.findByReturnRequestId(rr.getId())) {
+                    alreadyReturnedQty.merge(ai.getOrderItemId(), ai.getQuantity(), Integer::sum);
+                }
             }
         }
-        ReturnRequest rr = new ReturnRequest();
-        rr.setOrderId(orderId);
-        rr.setUserId(user.getId());
-        rr.setReason(req.getReason());
-        ReturnRequest saved = returnRequestRepository.save(rr);
+        ReturnRequest existingReturn = new ReturnRequest();
+        existingReturn.setOrderId(orderId);
+        existingReturn.setUserId(user.getId());
+        existingReturn.setReason(req.getReason());
+        ReturnRequest saved = returnRequestRepository.save(existingReturn);
 
         for (ReturnItemRequest itemReq : req.getItems()) {
             OrderItem oi = order.getItems().stream()
@@ -185,7 +191,7 @@ public class OrderService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                             "order item not found: " + itemReq.getOrderItemId()));
             // Quantity validation
-            int alreadyReturned = approvedReturnedQty.getOrDefault(oi.getId(), 0);
+            int alreadyReturned = alreadyReturnedQty.getOrDefault(oi.getId(), 0);
             int remaining = oi.getQuantity() - alreadyReturned;
             if (itemReq.getQuantity() < 1 || itemReq.getQuantity() > remaining) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -215,16 +221,17 @@ public class OrderService {
 
     //订单列表
     @Transactional(readOnly = true)
-    public List<OrderSummaryResponse> listMyOrders(String username, OrderStatus status){
+    public Page<OrderSummaryResponse> listMyOrders(String username, OrderStatus status, int page, int size){
         User user = getUserByUsernameOr404(username);
-        List<Order> orders;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Order> ordersPage;
         if (status == null) {
-            orders = orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+            ordersPage = orderRepository.findByUserId(user.getId(), pageable);
         } else {
-            orders = orderRepository.findByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), status);
+            ordersPage = orderRepository.findByUserIdAndStatus(user.getId(), status, pageable);
         }
 
-        return orders.stream().map(this::toSummary).toList();
+        return ordersPage.map(this::toSummary);
     }
 
     private ReturnRequestResponse toReturnResponse(ReturnRequest rr,
