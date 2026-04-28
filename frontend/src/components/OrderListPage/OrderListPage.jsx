@@ -51,7 +51,7 @@ const STATUS_FILTERS = [
     { key: 'SHIPPED', label: 'Shipped' },
     { key: 'DELIVERED', label: 'Delivered' },
     { key: 'CLOSED', label: 'Closed' },
-    { key: 'CANCELLED', label: 'Cancelled' },
+//     { key: 'CANCELLED', label: 'Cancelled' },
 ]
 
 export default function OrderListPage({ onNeedAuth, userName }) {
