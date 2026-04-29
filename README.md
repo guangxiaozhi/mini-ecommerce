@@ -119,17 +119,59 @@ POST /api/admin/inventory/{productId}/adjust
 ```
 ## 8. Demo Screenshots
 ### 8.1 Product Catalog
+Landing page with searchable product cards and quick add-to-cart actions.
+
 <img src="docs/screenshots/product-catalog.png" alt="Product catalog" width="900" />
 
 ### 8.2 Product Detail
+Detailed product view with pricing, stock state, and purchase entry points.
+
+<img src="docs/screenshots/product-detail.png" alt="Product detail" width="900" />
+
 ### 8.3 Cart / Checkout
+Cart review and checkout flow before creating an order.
+
+<img src="docs/screenshots/cart-checkout.png" alt="Cart checkout" width="900" />
+
 ### 8.4 Order List with Status Filters
+User order history with status chips and pagination controls.
+
+<img src="docs/screenshots/order-list.png" alt="Order list" width="900" />
+
 ### 8.5 Order Detail + Return Status
+Order detail page showing status-driven actions and return progress.
+
+<img src="docs/screenshots/order-detail.png" alt="Order detail" width="900" />
+
 ### 8.6 Admin Dashboard 
-### 8.7 Admin Products (Receive/Adjust/Movements)
+Admin overview page for quick operational monitoring.
+
+<img src="docs/screenshots/admin-dashboard.png" alt="Admin dashboard" width="900" />
+
+### 8.7 Admin Products 
+Admin product management for catalog editing and updates.
+
+<img src="docs/screenshots/admin-products.png" alt="Admin products" width="900" />
+
 ### 8.8 Admin Inventory (Receive/Adjust/Movements)
+Inventory workspace for receiving stock, manual adjustments, and movement history tracing.
+
+<img src="docs/screenshots/admin-inventory.png" alt="Admin inventory" width="900" />
+
 ### 8.9 Admin Orders (Status Transition)
+Admin order operations with controlled status transitions.
+
+<img src="docs/screenshots/admin-orders.png" alt="Admin orders" width="900" />
+
 ### 8.10 Admin Users
+User management list with search/filter and role visibility.
+
+<img src="docs/screenshots/admin-user1.png" alt="Admin users" width="900" />
+
+Expanded user detail panel with profile and management actions.
+
+<img src="docs/screenshots/admin-user2.png" alt="Admin users" width="900" />
+
 
 ## 9. Security & Permissions
 - JWT-based authentication for protected APIs
