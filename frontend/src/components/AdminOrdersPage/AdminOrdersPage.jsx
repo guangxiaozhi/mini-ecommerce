@@ -645,6 +645,8 @@ function ReturnDetailPanel({ token, returnId, onReturnUpdated }) {
                                 <tr>
                                     <th>Product</th>
                                     <th className="aop-num">Qty</th>
+                                    <th className="aop-num">Unit Price</th>
+                                    <th className="aop-num">Line Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -652,6 +654,8 @@ function ReturnDetailPanel({ token, returnId, onReturnUpdated }) {
                                     <tr key={item.id} className="aop-row aop-row--static">
                                         <td>{item.productName}</td>
                                         <td className="aop-num">{item.quantity}</td>
+                                        <td className="aop-num">{item.unitPrice != null? `$${Number(item.unitPrice).toFixed(2)}`:'-'}</td>
+                                        <td className="aop-num">{item.lineTotal != null? `$${Number(item.lineTotal).toFixed(2)}`:'-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
