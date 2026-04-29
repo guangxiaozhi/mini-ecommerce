@@ -31,17 +31,20 @@ public class AdminOrderService {
     }
 
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final ReturnRequestRepository returnRequestRepository;
     private final ReturnItemRepository returnItemRepository;
     private final UserRepository userRepository;
     private final InventoryService inventoryService;
 
     public AdminOrderService(OrderRepository orderRepository,
+                             OrderItemRepository orderItemRepository,
                              ReturnRequestRepository returnRequestRepository,
                              ReturnItemRepository returnItemRepository,
                              UserRepository userRepository,
                              InventoryService inventoryService) {
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.returnRequestRepository = returnRequestRepository;
         this.returnItemRepository = returnItemRepository;
         this.userRepository = userRepository;
@@ -271,6 +274,10 @@ public class AdminOrderService {
         r.setProductId(ri.getProductId());
         r.setProductName(ri.getProductName());
         r.setQuantity(ri.getQuantity());
+        orderItemRepository.findById(ri.getOrderItemId()).ifPresent(oi->{
+            r.setUnitPrice(oi.getUnitPrice());
+            r.setLineTotal(oi.getUnitPrice().multiply(BigDecimal.valueOf(ri.getQuantity())));
+        });
         return r;
     }
 }

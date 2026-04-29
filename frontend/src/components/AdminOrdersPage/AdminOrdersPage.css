@@ -267,6 +267,10 @@
     text-align: right;
 }
 
+.aop-table th.aop-num {
+    text-align: right;
+}
+
 .aop-nowrap {
     white-space: nowrap;
 }
