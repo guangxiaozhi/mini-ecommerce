@@ -177,3 +177,10 @@ Expanded user detail panel with profile and management actions.
 - JWT-based authentication for protected APIs
 - Admin endpoints protected by role/permission checks
 - Unauthorized/forbidden errors handled in frontend flows
+
+
+
+## Authors
+
+- **Xue Ren** — [@NirissaCamp](https://github.com/NirissaCamp)
+- **Xiaoguang Wang** — [@guangxiaozhi](https://github.com/guangxiaozhi)
