@@ -31,10 +31,36 @@ function statusClass(status) {
     return `orders-card__badge ${map[s] ?? 'orders-card__badge--pending'}`
 }
 
+// 后端 JSON 里是 REQUESTED 这类枚举名，列表上显示成可读英文（和详情页「Requested」一致）。
+function returnStatusLabel(code) {
+    const key = String(code || '').toUpperCase()
+    const map = {
+        REQUESTED: 'Requested',
+        APPROVED: 'Approved',
+        REFUNDED: 'Refunded',
+        REJECTED: 'Rejected',
+    }
+    return map[key] ?? (code || '—')
+}
+
+const STATUS_FILTERS = [
+    { key: 'ALL', label: 'All' },
+    { key: 'PENDING', label: 'Pending' },
+    { key: 'PAID', label: 'Paid' },
+    { key: 'PROCESSING', label: 'Processing' },
+    { key: 'SHIPPED', label: 'Shipped' },
+    { key: 'DELIVERED', label: 'Delivered' },
+    { key: 'CLOSED', label: 'Closed' },
+//     { key: 'CANCELLED', label: 'Cancelled' },
+]
+
 export default function OrderListPage({ onNeedAuth, userName }) {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [statusFilter, setStatusFilter] = useState('ALL')
+    const [page, setPage] = useState(0)
+    const [totalPages, setTotalPages] = useState(1)
     const token = localStorage.getItem('token')
 
     async function loadOrders() {
@@ -46,8 +72,11 @@ export default function OrderListPage({ onNeedAuth, userName }) {
         setLoading(true)
         setError(null)
         try {
-            const ordersList = await listOrders(token)
-            setOrders(ordersList)
+            const statusParam = statusFilter === 'ALL' ? undefined : statusFilter
+            const data = await listOrders(token, statusParam, page, 10)
+            setOrders(data?.content ?? [])
+//             setOrders(Array.isArray(data) ? data : [])
+            setTotalPages(data?.totalPages ?? 1)
         } catch (e) {
             setError(e.message ?? 'Failed to load the orders')
         } finally {
@@ -57,7 +86,7 @@ export default function OrderListPage({ onNeedAuth, userName }) {
 
     useEffect(() => {
         loadOrders()
-    }, [userName])
+    }, [userName, statusFilter, page])
 
     if (!token) {
         return (
@@ -108,17 +137,37 @@ export default function OrderListPage({ onNeedAuth, userName }) {
             <h1 className="orders-page__title">Your Orders</h1>
             <p className="orders-page__subtitle">Review your recent purchases and track order status.</p>
 
+            <div className="orders-filters" role="tablist" aria-label="Filter orders by status">
+                        {STATUS_FILTERS.map((f) => (
+                            <button
+                                key={f.key}
+                                type="button"
+                                className={`orders-filters__chip ${statusFilter === f.key ? 'is-active' : ''}`}
+                                onClick={() => {
+                                    setPage(0)
+                                    setStatusFilter(f.key)}}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+
             {orders.length === 0 ? (
                 <div className="orders-empty">
                     <div className="orders-empty__icon" aria-hidden>
                         📦
                     </div>
-                    <p className="orders-empty__msg">You haven&apos;t placed any orders yet.</p>
+                    <p className="orders-empty__msg">
+                        {statusFilter === 'ALL'
+                            ? "You haven't placed any orders yet."
+                            : `No ${statusFilter.toLowerCase()} orders yet.`}
+                    </p>
                     <Link to="/" className="orders-empty__cta">
                         Start shopping →
                     </Link>
                 </div>
             ) : (
+                <>
                 <ul className="orders-list">
                     {orders.map((o) => (
                         <li key={o.id}>
@@ -140,6 +189,11 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                                         <p className="orders-card__total">{formatMoney(o.totalAmount)}</p>
                                     </div>
                                 </div>
+                                {o.returnStatus ? (
+                                    <p className="orders-card__return-hint">
+                                        Return: {returnStatusLabel(o.returnStatus)}
+                                    </p>
+                                ) : null}
                                 <div className="orders-card__actions">
                                     <Link className="orders-card__link" to={`/orders/${o.id}`}>
                                         View order details →
@@ -149,6 +203,32 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                         </li>
                     ))}
                 </ul>
+                {totalPages > 1 && (
+                  <div className="orders-pagination">
+                    <button
+                      type="button"
+                      className="orders-pagination__btn"
+                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                    >
+                      Prev
+                    </button>
+
+                    <span className="orders-pagination__info">
+                      Page {page + 1} / {totalPages}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="orders-pagination__btn"
+                      onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={page >= totalPages - 1}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+            </>
             )}
         </div>
     )
