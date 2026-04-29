@@ -5,16 +5,19 @@
   import {adminListInventory} from "../../api/adminInventory.js";
   import {PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Legend} from "recharts";
   import './AdminDashboard.css'
+  import  {useNavigate} from "react-router-dom";
 
   export default function AdminDashboard() {
       const [productCount, setProductCount] = useState('...')
       const [userCount, setUserCount] = useState('...')
       const [orderCount, setOrderCount] = useState('...')
+      const [inventoryCount, setInventoryCount] = useState('...')
       const [productChartData, setProductChartData] = useState([])
       const [inventoryChartData, setInventoryChartData] = useState([])
       const [userChartData, setUserChartData] = useState([])
       const [orderChartData, serOrderChartData] = useState([])
       const token = useMemo(() => localStorage.getItem('token'), [])
+      const navigate = useNavigate()
 
       useEffect(() => {
           if (!token) return
@@ -71,6 +74,8 @@
           adminListInventory(token)
               .then(data =>{
                   if (!Array.isArray(data)) return
+                  const total = data.reduce((sum, item) => sum + item.onHandQty, 0)
+                  setInventoryCount(total)
                   const chartData = [...data]
                       .sort((a, b) => b.onHandQty - a.onHandQty)
                       .slice(0, 10)
@@ -78,12 +83,14 @@
                       }))
                   setInventoryChartData(chartData)
               })
+              .catch(() => setInventoryCount('?'))
       }, [token])
 
       const cards = [
-          { label: 'Products', value: productCount, icon: '🛍️', color: '#5c6bc0' },
-          { label: 'Users',    value: userCount,    icon: '👥', color: '#26a69a' },
-          { label: 'Orders',   value: orderCount,   icon: '🧾', color: '#ef6c00' },
+          { label: 'Products', value: productCount, icon: '🛍️', color: '#5c6bc0', link: '/admin/products'},
+          { label: 'Units in Stock',value: inventoryCount,icon: '📦',color: '#8e24aa',link: '/admin/inventory'},
+          { label: 'Users',    value: userCount,    icon: '👥', color: '#26a69a', link: '/admin/users'},
+          { label: 'Orders',   value: orderCount,   icon: '🧾', color: '#ef6c00', link: '/admin/orders' }
       ]
 
       return (
@@ -92,7 +99,10 @@
 
               <div className="ad-cards">
                   {cards.map(card => (
-                      <div key={card.label} className="ad-card">
+                      <div key={card.label} className="ad-card"
+                           onClick={() => navigate(card.link)}
+                           style={{cursor: 'pointer'}}
+                      >
                           <div className="ad-card__icon" style={{ color: card.color }}>
                               {card.icon}
                           </div>
