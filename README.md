@@ -126,7 +126,7 @@ Landing page with searchable product cards and quick add-to-cart actions.
 ### 8.2 Product Detail
 Detailed product view with pricing, stock state, and purchase entry points.
 
-<img src="docs/screenshots/product-detail.png" alt="Order detail" width="900" />
+<img src="docs/screenshots/product-detail.png" alt="Product detail" width="900" />
 
 ### 8.3 Cart / Checkout
 Cart review and checkout flow before creating an order.
