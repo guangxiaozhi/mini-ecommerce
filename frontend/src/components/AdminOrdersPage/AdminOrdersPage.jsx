@@ -286,7 +286,9 @@ function OrderDetailPanel({ token, orderId, onOrderUpdated }) {
 
     if (!order) return null
 
-    const transitions = STATUS_TRANSITIONS[order.status] ?? []
+    const transitions = order.returnStatus === 'REFUNDED'
+        ? []
+        : STATUS_TRANSITIONS[order.status] ?? []
 
     return (
         <div className="aop-card aop-detail-panel">
