@@ -12,10 +12,12 @@ import com.guang.miniecommercebackend.entity.Product;
 import com.guang.miniecommercebackend.entity.ProductImage;
 import com.guang.miniecommercebackend.entity.ProductBullet;
 import com.guang.miniecommercebackend.entity.ShippingOption;
+import com.guang.miniecommercebackend.entity.Inventory;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.repository.ProductImageRepository;
 import com.guang.miniecommercebackend.repository.ProductBulletRepository;
 import com.guang.miniecommercebackend.repository.ShippingOptionRepository;
+import com.guang.miniecommercebackend.repository.InventoryRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,15 +33,18 @@ public class ProductService {
     private final ProductImageRepository productImageRepository;
     private final ProductBulletRepository productBulletRepository;
     private final ShippingOptionRepository shippingOptionRepository;
+    private final InventoryRepository inventoryRepository;
 
     public ProductService(ProductRepository productRepository,
                           ProductImageRepository productImageRepository,
                           ProductBulletRepository productBulletRepository,
-                          ShippingOptionRepository shippingOptionRepository) {
+                          ShippingOptionRepository shippingOptionRepository,
+                          InventoryRepository inventoryRepository) {
         this.productRepository = productRepository;
         this.productImageRepository = productImageRepository;
         this.productBulletRepository = productBulletRepository;
         this.shippingOptionRepository = shippingOptionRepository;
+        this.inventoryRepository = inventoryRepository;
     }
 
     // ===== Public catalog (existing) =====
@@ -70,6 +75,15 @@ public class ProductService {
         Product p = new Product();
         applyUpsertFields(p, req);
         Product saved = productRepository.save(p);
+
+        Inventory inv = new Inventory();
+        inv.setProductId(saved.getId());
+        int qty = saved.getStock();
+        inv.setOnHandQty(qty);
+        inv.setAllocatedQty(0);
+        inv.setAvailableQty(qty);
+        inventoryRepository.save(inv);
+
         return toResponse(saved);
     }
     public ProductResponse updateProduct(Long id, ProductUpsertRequest req) {
