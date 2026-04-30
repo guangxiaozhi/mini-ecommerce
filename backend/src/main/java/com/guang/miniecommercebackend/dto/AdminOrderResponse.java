@@ -13,6 +13,7 @@ public class AdminOrderResponse {
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;
     private List<AdminOrderItemResponse> items; // null when listing, populated on detail
+    private String returnStatus;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -30,4 +31,6 @@ public class AdminOrderResponse {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public List<AdminOrderItemResponse> getItems() { return items; }
     public void setItems(List<AdminOrderItemResponse> items) { this.items = items; }
+    public String getReturnStatus(){return  returnStatus;}
+    public void setReturnStatus(String returnStatus){this.returnStatus = returnStatus;}
 }

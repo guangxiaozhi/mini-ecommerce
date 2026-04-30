@@ -379,3 +379,9 @@
     border-color: #232f3e;
     color: #fff;
 }
+
+.orders-card__badge--refunded {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
