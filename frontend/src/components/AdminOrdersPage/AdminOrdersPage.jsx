@@ -189,7 +189,10 @@ function OrdersTab({ token }) {
                                         >
                                             <td className="aop-nowrap">#{order.id}</td>
                                             <td>{order.username ?? '—'}</td>
-                                            <td><StatusBadge status={order.status} /></td>
+                                            <td className="aop-badge-cell">
+                                                {order.returnStatus !== 'REFUNDED' && <StatusBadge status={order.status} />}
+                                                {order.returnStatus && <StatusBadge status={order.returnStatus}/> }
+                                            </td>
                                             <td className="aop-num">${fmt(order.totalAmount)}</td>
                                             <td className="aop-nowrap">{fmtDate(order.createdAt)}</td>
                                         </tr>
@@ -291,7 +294,8 @@ function OrderDetailPanel({ token, orderId, onOrderUpdated }) {
             <div className="aop-detail-header">
                 <div className="aop-detail-title-row">
                     <h2 className="aop-card__title">Order #{order.id}</h2>
-                    <StatusBadge status={order.status} />
+                    {order.returnStatus !== 'REFUNDED' && <StatusBadge status={order.status} />}
+                    {order.returnStatus && <StatusBadge status={order.returnStatus} />}
                 </div>
                 <div className="aop-detail-meta">
                     <span><strong>Customer:</strong> {order.username ?? '—'}</span>

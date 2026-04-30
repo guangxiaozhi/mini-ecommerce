@@ -27,6 +27,7 @@ function statusClass(status) {
         DELIVERED:  'orders-card__badge--delivered',
         CLOSED:     'orders-card__badge--closed',
         CANCELLED:  'orders-card__badge--cancelled',
+        REFUNDED:   'orders-card__badge--refunded'
     }
     return `orders-card__badge ${map[s] ?? 'orders-card__badge--pending'}`
 }
@@ -177,7 +178,11 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                                         <span className="orders-card__label">Order</span>
                                         <span className="orders-card__id">#{o.id}</span>
                                     </div>
-                                    <span className={statusClass(o.status)}>{o.status}</span>
+                                    {o.returnStatus === 'REFUNDED'
+                                        ?<span className={statusClass('REFUNDED')}>REFUNDED</span>
+                                        :<span className={statusClass(o.status)}>{o.status}</span>
+                                    }
+
                                 </div>
                                 <div className="orders-card__mid">
                                     <div>
@@ -189,7 +194,7 @@ export default function OrderListPage({ onNeedAuth, userName }) {
                                         <p className="orders-card__total">{formatMoney(o.totalAmount)}</p>
                                     </div>
                                 </div>
-                                {o.returnStatus ? (
+                                {o.returnStatus && o.returnStatus !== 'REFUNDED'? (
                                     <p className="orders-card__return-hint">
                                         Return: {returnStatusLabel(o.returnStatus)}
                                     </p>

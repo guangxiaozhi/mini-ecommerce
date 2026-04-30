@@ -246,6 +246,19 @@ public class AdminOrderService {
                     .map(this::toAdminOrderItemResponse)
                     .collect(Collectors.toList()));
         }
+
+        List<ReturnRequest> returns = returnRequestRepository.findByOrderId(order.getId());
+        if(!returns.isEmpty()){
+            String rs = null;
+            for(ReturnRequest rr: returns){
+                String s = rr.getStatus().name();
+                if("REQUESTED".equals(s)) {rs = s; break;}
+                if("APPROVED".equals(s)) {rs = s;}
+                if("REFUNDED".equals(s) && !"APPROVED".equals(rs)) {rs = s;}
+                if("REJECTED".equals(s) && rs == null){rs = s;}
+            }
+            r.setReturnStatus(rs);
+        }
         return r;
     }
 
