@@ -163,6 +163,8 @@ Admin order operations with controlled status transitions.
 
 <img src="docs/screenshots/admin-orders.png" alt="Admin orders" width="900" />
 
+<img src="docs/screenshots/admin-orders-returns.png" alt="Admin orders returns" width="900" />
+
 ### 8.10 Admin Users
 User management list with search/filter and role visibility.
 
@@ -177,3 +179,10 @@ Expanded user detail panel with profile and management actions.
 - JWT-based authentication for protected APIs
 - Admin endpoints protected by role/permission checks
 - Unauthorized/forbidden errors handled in frontend flows
+
+
+
+## Authors
+
+- **Xue Ren** — [@NirissaCamp](https://github.com/NirissaCamp)
+- **Xiaoguang Wang** — [@guangxiaozhi](https://github.com/guangxiaozhi)
