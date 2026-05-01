@@ -345,7 +345,9 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                 </div>
                 <div className="order-detail__header-right">
                     <div className="order-detail__header-actions">
-                        <span className={statusClass(order.status)}>{order.status}</span>
+                        {returnBadgeText !== 'Refunded' && (
+                            <span className={statusClass(order.status)}>{order.status}</span>
+                        )}
                                             {returnBadgeText && (
                                                 <span className={`order-detail__badge ${returnBadgeClass}`}>
                                                     {returnBadgeText}

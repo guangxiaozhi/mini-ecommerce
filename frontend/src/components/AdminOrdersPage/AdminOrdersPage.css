@@ -446,3 +446,9 @@
     font-weight: 700;
     color: #1a1a2e;
 }
+
+.aop-badge-cell {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}

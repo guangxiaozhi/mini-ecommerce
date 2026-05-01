@@ -52,8 +52,8 @@ public class ProductSampleDataLoader implements CommandLineRunner {
         if (productRepository.count() == 0) {
         // ── Product 1 ──
         Product p1 = new Product();
-        p1.setName("示例笔记本");
-        p1.setDescription("入门学习用笔记本，示例数据。");
+        p1.setName("Demo Laptop");
+        p1.setDescription("Demo Data： Entry-level Student Laptop.");
         p1.setPrice(new BigDecimal("29.99"));
         p1.setStock(100);
         p1.setActive(true);
@@ -68,7 +68,7 @@ public class ProductSampleDataLoader implements CommandLineRunner {
 
         ProductBullet b1 = new ProductBullet();
         b1.setProduct(p1);
-        b1.setBrand("示例品牌");
+        b1.setBrand("Demo Brand");
         b1.setWeight("500 grams");
         b1.setDimension("21 x 14.8 x 1.5 cm");
         b1.setContent("200 pages of high-quality lined paper. Durable hardcover suitable for daily use.");
@@ -83,8 +83,8 @@ public class ProductSampleDataLoader implements CommandLineRunner {
 
         // ── Product 2 ──
         Product p2 = new Product();
-        p2.setName("示例鼠标");
-        p2.setDescription("无线鼠标，示例数据。");
+        p2.setName("Demo Mouse");
+        p2.setDescription("Demo Data: Wireless Mouse.");
         p2.setPrice(new BigDecimal("15.50"));
         p2.setStock(50);
         p2.setActive(true);
@@ -99,7 +99,7 @@ public class ProductSampleDataLoader implements CommandLineRunner {
 
         ProductBullet b2 = new ProductBullet();
         b2.setProduct(p2);
-        b2.setBrand("示例品牌");
+        b2.setBrand("Demo Brand");
         b2.setWeight("120 grams");
         b2.setDimension("11.5 x 6.2 x 3.8 cm");
         b2.setContent("Wireless 2.4GHz with USB receiver");
@@ -130,7 +130,7 @@ public class ProductSampleDataLoader implements CommandLineRunner {
 
         ProductBullet b3 = new ProductBullet();
         b3.setProduct(p3);
-        b3.setBrand("示例品牌");
+        b3.setBrand("Demo Brand");
         b3.setWeight("15 kg");
         b3.setDimension("120 x 60 x 75 cm");
         b3.setContent("Solid wood construction for durability. Easy to assemble with included instructions.");
