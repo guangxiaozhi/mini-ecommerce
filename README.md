@@ -182,7 +182,15 @@ Expanded user detail panel with profile and management actions.
 
 
 
-## Authors
+## 10. Authors
 
 - **Xue Ren** — [@NirissaCamp](https://github.com/NirissaCamp)
 - **Xiaoguang Wang** — [@guangxiaozhi](https://github.com/guangxiaozhi)
+
+## 11. Disclaimer
+
+This project is developed solely for learning purposes.
+
+All images, icons, and media assets used in this system are for demonstration only and are not intended for commercial use.
+
+If any material violates copyright, please contact me, and I will remove it promptly.
