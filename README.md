@@ -163,6 +163,8 @@ Admin order operations with controlled status transitions.
 
 <img src="docs/screenshots/admin-orders.png" alt="Admin orders" width="900" />
 
+<img src="docs/screenshots/admin-orders-returns.png" alt="Admin orders returns" width="900" />
+
 ### 8.10 Admin Users
 User management list with search/filter and role visibility.
 
