@@ -193,4 +193,4 @@ This project is developed solely for learning purposes.
 
 All images, icons, and media assets used in this system are for demonstration only and are not intended for commercial use.
 
-If any material violates copyright, please contact us, and I will remove it promptly.
+If any material violates copyright, please contact us, and we will remove it promptly.
