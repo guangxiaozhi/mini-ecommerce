@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 @Component
-@Profile("local")
+@Profile({"local", "prod"})
 public class ProductSampleDataLoader implements CommandLineRunner {
 
     private final ProductRepository productRepository;
