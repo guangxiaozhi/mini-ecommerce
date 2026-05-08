@@ -216,7 +216,7 @@ function App() {
                         <AdminLayout userName={userName} userRole={userRole} userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} onLogout={handleLogout}>
                             <Routes>
                                 <Route path="dashboard" element={<AdminDashboard />} />
-                                <Route path="products" element={<AdminProductsPage />} />
+                                <Route path="products" element={<AdminProductsPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin}  />} />
                                 <Route path="inventory" element={<AdminInventoryPage />} />
                                 <Route path="orders" element={<AdminOrdersPage />} />
                                 <Route path="users" element={<AdminUsersPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />

@@ -32,7 +32,7 @@ function toPayload(form) {
     }
 }
 
-export default function AdminProductsPage() {
+export default function AdminProductsPage({ userPermissions = [], isSuperAdmin = false }) {
     const [items, setItems] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(false)
@@ -45,6 +45,11 @@ export default function AdminProductsPage() {
     const [imageIsPrimary, setImageIsPrimary] = useState(false)
     const [editingImageId,setEditingImageId] = useState(null)
     const [imageSaving, setImageSaving] = useState(false)
+    const canBrowse = isSuperAdmin || userPermissions.includes('PRODUCT_BROWSE')
+    const canCreate = isSuperAdmin || userPermissions.includes('PRODUCT_CREATE')
+    const canEdit   = isSuperAdmin || userPermissions.includes('PRODUCT_EDIT')
+    const canDelete = isSuperAdmin || userPermissions.includes('PRODUCT_DELETE')
+    const cannotSave = editingId == null ? !canCreate : !canEdit;
     const [bulletForm, setBulletForm] = useState({brand:'', weight:'',dimension:'',content:''})
     const [bulletSaving, setBulletSaving] = useState(false)
     const [shippingForm, setShippingForm] = useState({label:'', description:'', isFree:false})
@@ -105,6 +110,10 @@ export default function AdminProductsPage() {
     }
 
     function startEdit(item) {
+        if (!canEdit) {
+          setError('No permission to edit product images')
+          return
+        }
         setEditingId(item.id)
         setForm({
             name: item.name ?? '',
@@ -215,6 +224,16 @@ export default function AdminProductsPage() {
     }
 
     async function handleSubmitAll(e) {
+//     （新增）要 canCreate
+        if (editingId == null&& !canCreate){
+            setError('No permission to create product')
+            return
+        }
+//     （更新）要 canEdit
+        if (editingId != null&& !canEdit){
+            setError('No permission to edit product')
+            return
+        }
         e.preventDefault()
         if (!token) {
             setError('Please sign in first.')
@@ -292,6 +311,10 @@ export default function AdminProductsPage() {
     }
 
     async function handleDelete(id) {
+        if (!canDelete) {
+            setError('No permission to delete product')
+            return
+        }
         if (!token) return
         const ok = window.confirm('Delete this product?')
         if (!ok) return
@@ -306,6 +329,10 @@ export default function AdminProductsPage() {
     }
 
     async function handleAddImage(e) {
+        if (!canEdit) {
+            setError('No permission to edit product images')
+            return
+        }
         e.preventDefault()
         const errors = validateImage()
         if (Object.keys(errors).length > 0) { setImageErrors(errors); return }
@@ -362,6 +389,10 @@ export default function AdminProductsPage() {
     }
 
     async function handleDeleteImage(imageId) {
+        if (!canEdit) {
+          setError('No permission to edit product images')
+          return
+        }
         if (!window.confirm('Delete this image?')) return
         try {
             await adminDeleteProductImage(token, managingImagesFor.id, imageId)
@@ -389,6 +420,10 @@ export default function AdminProductsPage() {
     }
 
     async function handleAddShipping(e) {
+        if (!canEdit) {
+          setError('No permission to edit product images')
+          return
+        }
         e.preventDefault()
         if (!managingImagesFor) return
         const errors = validateShipping()
@@ -412,6 +447,10 @@ export default function AdminProductsPage() {
     }
 
     async function handleDeleteShipping(shippingId) {
+        if (!canEdit) {
+          setError('No permission to edit product images')
+          return
+        }
         if (!window.confirm('Delete this shipping option?')) return
         try {
             await adminDeleteShipping(token, managingImagesFor.id, shippingId)
@@ -619,8 +658,8 @@ export default function AdminProductsPage() {
                                         <td className="ap-table__url">{img.imageUrl}</td>
                                         <td>{img.isPrimary ? 'Yes' : 'No'}</td>
                                         <td>
-                                            <button className="ap-btn--green-sm ap-btn--narrow" onClick={()=>startEditImage(img)}>✏️</button>
-                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteImage(img.id)}>🗑️</button>
+                                            <button className="ap-btn ap-btn--green-sm ap-btn--narrow" onClick={()=>startEditImage(img)} disabled={!canEdit}>✏️</button>
+                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteImage(img.id)} disabled={!canEdit}>🗑️</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -674,8 +713,8 @@ export default function AdminProductsPage() {
                                         <td>{s.description}</td>
                                         <td>{s.isFree ? 'Yes' : 'No'}</td>
                                         <td>
-                                            <button className="ap-btn--green-sm ap-btn--narrow" onClick={() => startEditShipping(s)}>✏️</button>
-                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteShipping(s.id)}>🗑️</button>
+                                            <button className="ap-btn ap-btn--green-sm ap-btn--narrow" onClick={() => startEditShipping(s)} disabled={!canEdit}>✏️</button>
+                                            <button className="ap-btn ap-btn--red-sm ap-btn--narrow" onClick={() => handleDeleteShipping(s.id)} disabled={!canEdit}>🗑️</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -721,7 +760,7 @@ export default function AdminProductsPage() {
 
             {/* Submit row */}
             <div className="ap-submit-row">
-                <button className="ap-btn ap-btn--green" onClick={handleSubmitAll} disabled={saving}>
+                <button className="ap-btn ap-btn--green" onClick={handleSubmitAll} disabled={saving || cannotSave}>
                     {saving ? 'Saving...' : editingId == null ? 'Add' : 'Update'}
                 </button>
                 {editingId != null && (
@@ -761,8 +800,8 @@ export default function AdminProductsPage() {
                                     <td>{p.stock}</td>
                                     <td>{String(p.active)}</td>
                                     <td className="ap-table__actions">
-                                        <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>✏️</button>
-                                        <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>🗑️</button>
+                                        <button className="ap-btn ap-btn--green-sm" onClick={() => startEdit(p)} disabled={!canEdit}>✏️</button>
+                                        <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)} disabled={!canDelete}>🗑️</button>
                                     </td>
                                 </tr>
                             ))}
