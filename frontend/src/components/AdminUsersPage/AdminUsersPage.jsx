@@ -118,6 +118,13 @@ const PERMISSION_CONFIG = [
         { code: 'ORDER_RETURNS',       label: 'Returns' },
         { code: 'ORDER_ANALYTICS',     label: 'Analytics' },
     ]},
+    { resource: 'Chat', items: [
+        { code: 'CHAT_INQUIRY_VIEW_ASSIGNED',      label: 'View Inquiries' },
+        { code: 'CHAT_INQUIRY_REPLY', label: 'Reply to Inquiries' },
+        { code: 'CHAT_ORDER_VIEW_ASSIGNED',       label: 'View Order Chats' },
+        { code: 'CHAT_ORDER_REPLY',     label: 'Reply to Order Chats' },
+        { code: 'CHAT_CONVERSATION_CLOSE',     label: 'Close Conversations' },
+    ]},
     { resource: 'Users', items: [
         { code: 'USER_ADMIN_DETAIL',   label: 'Admin User Detail' },
         { code: 'USER_REGULAR_DETAIL', label: 'Regular User Detail' },
