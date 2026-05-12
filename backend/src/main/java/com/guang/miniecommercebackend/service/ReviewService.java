@@ -1,9 +1,11 @@
 package com.guang.miniecommercebackend.service;
 
 import com.guang.miniecommercebackend.dto.CreateReviewRequest;
+import com.guang.miniecommercebackend.dto.UpdateReviewRequest;
 import com.guang.miniecommercebackend.dto.ReviewResponse;
 import com.guang.miniecommercebackend.dto.ReviewEligibilityResponse;
 import com.guang.miniecommercebackend.dto.ReviewEligibilityResponse.ExistingReview;
+import com.guang.miniecommercebackend.dto.ReviewEligibilityResponse.Reason;
 import com.guang.miniecommercebackend.entity.OrderItem;
 import com.guang.miniecommercebackend.entity.OrderStatus;
 import com.guang.miniecommercebackend.entity.Product;
@@ -97,6 +99,42 @@ public class ReviewService {
                 r.getCreatedAt(), r.getUpdatedAt(), edited, true);
     }
 
+    @Transactional
+    public ReviewResponse update(String username, Long reviewId, UpdateReviewRequest req){
+        User user = requireUser(username);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(
+                ()->new ResponseStatusException(HttpStatus.NOT_FOUND, "REVIEW_NOT_FOUND"));
+        if(!review.getUserId().equals(user.getId())){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "NOT_OWNER");
+        }
+        if(!review.getDeletedAt() != null){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "REVIEW_DELETED");
+        }
+        if(req.rating() != null){
+            review.setRating(req.rating());
+        }
+        if(req.comment() != null){
+            review.setComment(req.comment().strip());
+        }
+        Review saved = reviewRepository.save(review);
+        return toReviewResponse(saved, user.getUsername());
+    }
+
+    @Transactional
+    public void softDelete(String username, Long reviewId){
+        User user = requireUser(username);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(
+                ()->new ResponseStatusException(HttpStatus.NOT_FOUND, "REVIEW_NOT_FOUND"));
+        if(!review.getUserId().equals(user.getId())){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "NOT_OWNER");
+        }
+        if(review.getDeletedAt()!=null){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "REVIEW_DELETED");
+        }
+        review.setDeletedAt(java.time.LocalDateTime.now());
+        review.setDeletedByAdmin(false);
+        reviewRepository.save(review);
+    }
 }
 
 
