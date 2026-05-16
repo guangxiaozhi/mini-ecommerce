@@ -2,9 +2,8 @@ package com.guang.miniecommercebackend.service;
 
 import com.guang.miniecommercebackend.dto.ChatConversationResponse;
 import com.guang.miniecommercebackend.dto.ChatMessageResponse;
-import com.guang.miniecommercebackend.entity.ChatConversation;
-import com.guang.miniecommercebackend.entity.ChatMessage;
-import com.guang.miniecommercebackend.entity.User;
+import com.guang.miniecommercebackend.dto.SendChatMessageRequest;
+import com.guang.miniecommercebackend.entity.*;
 import com.guang.miniecommercebackend.repository.ChatConversationRepository;
 import com.guang.miniecommercebackend.repository.ChatMessageRepository;
 import com.guang.miniecommercebackend.repository.ChatParticipantRepository;
@@ -12,10 +11,6 @@ import com.guang.miniecommercebackend.repository.UserRepository;
 import com.guang.miniecommercebackend.repository.OrderRepository;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.dto.CreateChatConversationRequest;
-import com.guang.miniecommercebackend.entity.ChatConversationType;
-import com.guang.miniecommercebackend.entity.ChatParticipant;
-import com.guang.miniecommercebackend.entity.ChatParticipantRole;
-import com.guang.miniecommercebackend.entity.Order;
 
 
 import org.springframework.http.HttpStatus;
@@ -171,6 +166,28 @@ public class ChatService {
         Pageable pageable = PageRequest.of(page, size);
         Page<ChatMessage> raw = chatMessageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId, pageable);
         return raw.map(this::toMessageResponse);
+    }
+
+    @Transactional
+    public ChatMessageResponse sendMessage(String username, Long conversationId, SendChatMessageRequest req) {
+        User user = getUserByUsernameOr404(username);
+
+        if (!chatConversationRepository.existsById(conversationId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "conversation not found");
+        }
+
+        if (!chatParticipantRepository.existsByConversationIdAndUserId(conversationId, user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a participant of this conversation");
+        }
+
+        ChatMessage msg = new ChatMessage();
+        msg.setConversationId(conversationId);
+        msg.setSenderUserId(user.getId());
+        msg.setType(ChatMessageType.TEXT);
+        msg.setContent(req.getContent().trim());
+        ChatMessage saved = chatMessageRepository.save(msg);
+
+        return toMessageResponse(saved);
     }
 }
 

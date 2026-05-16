@@ -3,6 +3,7 @@ package com.guang.miniecommercebackend.controller;
 import com.guang.miniecommercebackend.dto.ChatConversationResponse;
 import com.guang.miniecommercebackend.dto.ChatMessageResponse;
 import com.guang.miniecommercebackend.dto.CreateChatConversationRequest;
+import com.guang.miniecommercebackend.dto.SendChatMessageRequest;
 import com.guang.miniecommercebackend.service.ChatService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,16 @@ public class ChatController {
             @RequestParam(defaultValue = "20") int size) {
         String username = (String) auth.getPrincipal();
         return chatService.getMessages(username, conversationId, page, size);
+    }
+//    发送消息
+    @PostMapping("/conversations/{conversationId}/messages")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ChatMessageResponse sendMessage(
+            Authentication auth,
+            @PathVariable("conversationId") Long conversationId,
+            @Valid @RequestBody SendChatMessageRequest body) {
+        String username = (String) auth.getPrincipal();
+        return chatService.sendMessage(username, conversationId, body);
     }
 
 }
