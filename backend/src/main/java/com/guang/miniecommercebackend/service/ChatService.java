@@ -189,5 +189,20 @@ public class ChatService {
 
         return toMessageResponse(saved);
     }
+
+    public Page<ChatConversationResponse> listMyConversations(String username, int page, int size) {
+        User user = getUserByUsernameOr404(username);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ChatParticipant> participantPage =
+                chatParticipantRepository.findByUserIdOrderByJoinedAtDesc(user.getId(), pageable);
+
+        return participantPage.map(p -> {
+            ChatConversation conv = chatConversationRepository.findById(p.getConversationId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.INTERNAL_SERVER_ERROR, "conversation missing"));
+            return toConversationResponse(conv);
+        });
+    }
 }
 

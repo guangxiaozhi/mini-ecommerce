@@ -31,7 +31,7 @@ public class ChatController {
         HttpStatus status = outcome.created() ? HttpStatus.CREATED : HttpStatus.OK;
         return ResponseEntity.status(status).body(outcome.response());
     }
-    // GET  /api/chat/conversations/{id}/messages?page=0&size=20 — 分页消息
+    // GET  /api/chat/conversations/{id}/messages?page=0&size=20 — 会话内部的消息分页
     @GetMapping("/conversations/{conversationId}/messages")
     public Page<ChatMessageResponse> getMessages(
             Authentication auth,
@@ -52,4 +52,13 @@ public class ChatController {
         return chatService.sendMessage(username, conversationId, body);
     }
 
+    // GET /api/chat/conversations?page=0&size=20 — 当前用户参与过的会话分页。
+    @GetMapping("/conversations")
+    public Page<ChatConversationResponse> listMyConversations(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        String username = (String) auth.getPrincipal();
+        return chatService.listMyConversations(username, page, size);
+    }
 }
