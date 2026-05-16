@@ -1,0 +1,7 @@
+ .stars { display: inline-flex; gap: 1px; }
+ .stars--sm .stars__glyph { font-size: 14px; }
+ .stars--md .stars__glyph { font-size: 18px; }
+ .stars--lg .stars__glyph { font-size: 24px; }
+ .stars__glyph--full   { color: #f5a623; }
+ .stars__glyph--half   { color: #f5a623; font-weight: bold; }
+ .stars__glyph--empty  { color: #d1d5db; }

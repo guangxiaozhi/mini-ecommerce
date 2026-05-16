@@ -19,6 +19,8 @@ import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx";
 import OrderListPage from "./components/OrderListPage/OrderListPage.jsx";
 import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx";
 import PaymentPage from "./components/PaymentPage/PaymentPage.jsx";
+import MyReviewsPage from "./components/MyReviewsPage/MyReviewsPage.jsx";
+import AdminReviewsPage from "./components/AdminReviewPage/AdminReviewPage.jsx";
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -218,6 +220,7 @@ function App() {
                                 <Route path="inventory" element={<AdminInventoryPage />} />
                                 <Route path="orders" element={<AdminOrdersPage />} />
                                 <Route path="users" element={<AdminUsersPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
+                                <Route path="reviews" element={<AdminReviewsPage />} />
                             </Routes>
                         </AdminLayout>
                     </RequireAdmin>
@@ -270,8 +273,11 @@ function App() {
                     />
                 }
             />
+            <Route
+                path="/account/reviews"
+                element={<MyReviewsPage onNeedAuth={() => setShowLogin(true)} />}
+            />
         </Routes>
-
     </>
   )
 }

@@ -3,6 +3,8 @@
 import { Link, useParams, useNavigate} from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { getOrder, createReturn } from '../../api/orders.js'
+import { getEligibility, createReview, updateReview, deleteReview} from "../../api/reviews.js";
+import Stars from "../Stars/Stars.jsx";
 import './OrderDetailPage.css'
 
 function formatMoney(n) {
@@ -190,6 +192,138 @@ function ReturnModal({ order, token, onSuccess, onClose }) {
                     >{submitting ? 'Submitting…' : 'Submit Return'}</button>
                 </div>
             </div>
+        </div>
+    )
+}
+
+function  ReviewControls({orderItemId, token, productName, onChange}){
+    const [state, setState] = useState({loading:true, eligible:false,
+        reason:null, existing:null, error:null })
+    const [editing, setEditing] = useState(false)
+    const [rating, setRating] = useState(5)
+    const [comment,setComment] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState(null)
+
+    async function refresh(){
+        setState(s=>({...s, loading: true, error: null}))
+        try{
+            const r = await getEligibility(token, orderItemId)
+            setState({loading: false, eligible: r.eligible, reason: r.reason, existing: r.existingReview, error: null})
+        }catch (e){
+            setState({loading: false, eligible: false, reason: null, existing: null, error: e.message})
+        }
+    }
+
+    useEffect(()=>{refresh()}, [orderItemId])
+
+    function startEdit(){
+        const ex = state.existing
+        if(ex){
+            setRating(ex.rating)
+            setComment(ex.comment ?? '')
+        }else{
+            setRating(5)
+            setComment('')
+        }
+        setSubmitError(null)
+        setEditing(true)
+    }
+
+    async function submit(){
+        setSubmitError(null)
+        const trimmed = (comment ?? '').trim()
+        if(trimmed.length < 10) {setSubmitError('Comment must be at least 10 characters.'); return}
+        setSubmitting(true)
+        try {
+            const ex = state.existing
+            if(ex && !ex.deletedAt){
+                await  updateReview(token, ex.id, {rating, comment: trimmed})
+            }else{
+                //create OR revive(server decides)
+                await createReview(token, orderItemId, {rating, comment:trimmed})
+            }
+            setEditing(false)
+            await refresh()
+            if(onChange) onChange()
+        }catch (e){
+            setSubmitError(e.message)
+        }finally {
+            setSubmitting(false)
+        }
+    }
+
+    async function handleDelete(){
+        if (!state.existing || state.existing.deletedAt) return
+        if(!window.confirm("Delete your review?")) return
+        try {
+            await deleteReview(token, state.existing.id)
+            await refresh()
+            if(onChange) onChange()
+        } catch (e){
+            setState(s=>({...s, error: e.message}))
+        }
+    }
+
+    if(state.loading) return <div className="order-detail__review-loading">Loading...</div>
+    if(state.error) return  <div className="order-detail__review-error">{state.error}</div>
+
+    const ex = state.existing
+    if(ex && ex.deletedByAdmin){
+        return <div className="order-detail__review-hidden">Your review for {productName} was hidden by an admin.</div>
+    }
+    if(editing){
+        return (
+            <div className="order-detail__review-form">
+                <div className="order-detail__review-rating">
+                    {[1,2,3,4,5].map(n=>(
+                        <button
+                            key={n}
+                            type="button"
+                            className={`order-detail__review-star${n<= rating ? ' order-detail__review-star--on': ''}`}
+                            onClick={() => setRating(n)}
+                            aria-label={`${n} star`}
+                        >★</button>
+                    ))}
+                </div>
+                <textarea
+                    className="order-detail__review-textarea"
+                    value={comment}
+                    onChange={e=>setComment(e.target.value)}
+                    maxLength={1000}
+                    rows={3}
+                    placeholder="Share your thoughts (10-1000 characters)..."
+                />
+                <div className="order-detail__review-counter">{(comment?? '').length}/1000</div>
+                {submitError && <div className="order-detail__review-error">{submitError}</div> }
+                <div className="order-detail__review-actions">
+                    <button onClick={()=> setEditing(false)} disabled={submitting}>Cancel</button>
+                    <button onClick={submit} disabled={submitting}>{submitting ? 'Saving...' : 'Submit'}</button>
+                </div>
+            </div>
+        )
+    }
+
+    if(ex && !ex.deletedAt){
+        return (
+            <div className="order-detail__review-existing">
+                <div className="order-detail__review-existing-head">
+                    <Stars rating={ex.rating}/>
+                    <span className="order-detail__review-existing-label">Your review</span>
+                </div>
+                <p className="order-detail__review-existing-comment">{ex.comment}</p>
+                <div className="order-detail__review-actions">
+                    <button onClick={startEdit}>Edit your review</button>
+                    <button onClick={handleDelete}>Delete</button>
+                </div>
+            </div>
+        )
+    }
+
+    // No existing visible review (none, or user-deleted that we'll revive)
+    return (
+        <div className="order-detail__review-actions">
+            <button onClick={startEdit}>Write a review</button>
         </div>
     )
 }
@@ -419,14 +553,28 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                             </thead>
                             <tbody>
                                 {items.map((line) => (
-                                    <tr key={line.orderItemId}>
-                                        <td className="order-detail-table__name">{line.productName}</td>
-                                        <td className="order-detail-table__num">{formatMoney(line.unitPrice)}</td>
-                                        <td className="order-detail-table__num">{line.quantity}</td>
-                                        <td className="order-detail-table__num order-detail-table__subtotal">
-                                            {formatMoney(line.subtotal)}
-                                        </td>
-                                    </tr>
+                                    <>
+                                        <tr key={`item-${line.orderItemId}`}>
+                                            <td className="order-detail-table__name">{line.productName}</td>
+                                            <td className="order-detail-table__num">{formatMoney(line.unitPrice)}</td>
+                                            <td className="order-detail-table__num">{line.quantity}</td>
+                                            <td className="order-detail-table__num order-detail-table__subtotal">
+                                                {formatMoney(line.subtotal)}
+                                            </td>
+                                        </tr>
+                                        {(order.status === 'DELIVERED' || order.status === 'CLOSED') && (
+                                            <tr key={`review-${line.orderItemId}`} className="order-detail__review-row">
+                                                <td colSpan={4}>
+                                                    <ReviewControls
+                                                        orderItemId={line.orderItemId}
+                                                        token={token}
+                                                        productName={line.productName}
+                                                        onChange={() => {}}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 ))}
                             </tbody>
                         </table>

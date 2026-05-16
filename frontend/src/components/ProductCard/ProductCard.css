@@ -55,11 +55,8 @@
 }
 
 .pc-card__rating   { display: flex; align-items: center; gap: 4px; }
-.pc-stars          { display: inline-flex; gap: 1px; }
-.pc-star           { font-size: 14px; }
-.pc-star--full     { color: #f5a623; }
-.pc-star--empty    { color: #d1d5db; }
 .pc-card__review-count { font-size: 12px; color: #007185; }
+.pc-card__no-reviews{font-size: 12px; color: #6b7280;}
 
 .pc-card__price {
     font-size: 20px;

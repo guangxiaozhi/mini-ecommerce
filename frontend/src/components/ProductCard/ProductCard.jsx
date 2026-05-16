@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './ProductCard.css';
 import {useNavigate} from "react-router-dom";
+import Stars from "../Stars/Stars.jsx";
 
 const COLORS = [
     { bg: 'linear-gradient(135deg,#dbeafe,#bfdbfe)', text: '#1d4ed8' },
@@ -12,25 +13,8 @@ const COLORS = [
     { bg: 'linear-gradient(135deg,#fff7ed,#fed7aa)', text: '#c2410c' },
     { bg: 'linear-gradient(135deg,#f0fdf4,#bbf7d0)', text: '#166534' },
 ];
-const RATINGS       = [4.5, 4.3, 4.7, 4.1, 4.6, 4.8, 3.9, 4.2, 4.4, 4.0];
-const REVIEW_COUNTS = [1284, 532, 89, 2107, 445, 127, 678, 312, 891, 56];
 
 const getColor       = id => COLORS[(id - 1) % COLORS.length];
-const getRating      = id => RATINGS[(id - 1) % RATINGS.length];
-const getReviewCount = id => REVIEW_COUNTS[(id - 1) % REVIEW_COUNTS.length];
-
-function Stars({ rating }) {
-    const filled = Math.round(rating);
-    return (
-        <span className="pc-stars" aria-label={`${rating} out of 5 stars`}>
-              {[1, 2, 3, 4, 5].map(i => (
-                  <span key={i} className={`pc-star ${i <= filled ? 'pc-star--full' : 'pc-star--empty'}`}>
-                      {i <= filled ? '★' : '☆'}
-                  </span>
-              ))}
-          </span>
-    );
-}
 
 function stockInfo(stock) {
     if (stock <= 0) return { label: 'Out of Stock',        cls: 'pc-stock--out' };
@@ -43,11 +27,11 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
     const [errMsg, setErrMsg] = useState('');
 
     const color      = getColor(product.id);
-    const rating     = getRating(product.id);
-    const reviews    = getReviewCount(product.id);
     const stock      = stockInfo(product.stock);
     const outOfStock = product.stock <= 0;
     const navigate = useNavigate();
+    const reviewCount = Number(product.reviewCount) || 0;
+    const  ratingAvg = product.ratingAvg != null ? Number(product.ratingAvg): null;
 
     async function handleAdd() {
         if (!isLoggedIn)                       { onNeedAuth(); return; }
@@ -98,10 +82,14 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
                 </h3>
 
                 <div className="pc-card__rating">
-                    <Stars rating={rating} />
-                    <span className="pc-card__review-count">
-                          ({reviews.toLocaleString()})
-                      </span>
+                    {reviewCount >0
+                        ? <>
+                            <Stars rating={ratingAvg ?? 0} />
+                            <span className="pc-card__review-count">
+                                ({reviewCount.toLocaleString()})
+                            </span>
+                        </>
+                        : <span className="pc-card__no-reviews">No reviews yet </span>}
                 </div>
 
                 <div className="pc-card__price">

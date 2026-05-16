@@ -8,6 +8,7 @@ const NAV_ITEMS = [
     { label: 'Inventory',  path: '/admin/inventory',  icon: '📦', needs: p => p.some(c => c.startsWith('INVENTORY_')) },
     { label: 'Orders',     path: '/admin/orders',     icon: '🧾', needs: p => p.some(c => c.startsWith('ORDER_')) },
     { label: 'Users',     path: '/admin/users',     icon: '👥', needs: p => p.some(c => c.startsWith('USER_')) },
+    { label: 'Reviews',    path: '/admin/reviews',    icon: '⭐', needs: p => p.some(c => c.startsWith('REVIEW_')) },
 ]
 
 export default function AdminLayout({ children, userName, userRole, userPermissions = [], isSuperAdmin = false, onLogout }) {
