@@ -1,9 +1,6 @@
 package com.guang.miniecommercebackend.service;
 
-import com.guang.miniecommercebackend.dto.CreateReviewRequest;
-import com.guang.miniecommercebackend.dto.UpdateReviewRequest;
-import com.guang.miniecommercebackend.dto.ReviewResponse;
-import com.guang.miniecommercebackend.dto.ReviewEligibilityResponse;
+import com.guang.miniecommercebackend.dto.*;
 import com.guang.miniecommercebackend.dto.ReviewEligibilityResponse.ExistingReview;
 import com.guang.miniecommercebackend.dto.ReviewEligibilityResponse.Reason;
 import com.guang.miniecommercebackend.entity.OrderItem;
@@ -15,14 +12,14 @@ import com.guang.miniecommercebackend.repository.OrderItemRepository;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.repository.ReviewRepository;
 import com.guang.miniecommercebackend.repository.UserRepository;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ReviewService {
@@ -74,14 +71,14 @@ public class ReviewService {
             review = new Review();
             review.setOrderItemId(orderItemId);
             review.setUserId(user.getId());
-            review.setProductID(item.getProductId());
+            review.setProductId(item.getProductId());
         }else{
             Review prior = existing.get();
             if(prior.getDeletedAt() == null){
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "REVIEW_ALREADY_EXISTS");
             }
             if(prior.isDeletedByAdmin()){
-                throw new ResponseStatusException((HttpStatus.CONFLICT, "REVIEW_HIDDEN_BY_ADMIN"));
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "REVIEW_HIDDEN_BY_ADMIN");
             }
             //revive the user-soft-deleted row
             prior.setDeletedAt(null);
@@ -107,7 +104,7 @@ public class ReviewService {
         if(!review.getUserId().equals(user.getId())){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "NOT_OWNER");
         }
-        if(!review.getDeletedAt() != null){
+        if(review.getDeletedAt() != null){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "REVIEW_DELETED");
         }
         if(req.rating() != null){
@@ -135,6 +132,123 @@ public class ReviewService {
         review.setDeletedByAdmin(false);
         reviewRepository.save(review);
     }
+
+    @Transactional
+    public void adminHide(Long reviewId){
+        Review review = reviewRepository.findById(reviewId).orElseThrow(
+                ()->new ResponseStatusException(HttpStatus.NOT_FOUND, "REVIEW_NOT_FOUND"));
+        if(review.getDeletedAt() != null){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "REVIEW_ALREADY_DELETED");
+        }
+        review.setDeletedAt(java.time.LocalDateTime.now());
+        review.setDeletedByAdmin(true);
+        reviewRepository.save(review);
+    }
+
+    @Transactional
+    public void adminUnhide(Long reviewId){
+        Review review  =reviewRepository.findById(reviewId).orElseThrow(
+                ()->new ResponseStatusException(HttpStatus.NOT_FOUND, "REVIEW_NOT_FOUND"));
+        if(review.getDeletedAt() == null){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "REVIEW_NOT_DELETED");
+        }
+        if (!review.isDeletedByAdmin()){
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "NOT_ADMIN_HIDDEN");
+        }
+        review.setDeletedAt(null);
+        review.setDeletedByAdmin(false);
+        reviewRepository.save(review);
+    }
+
+    public Page<ReviewResponse> listForProduct(Long productId, int page, int size, String sort){
+        Pageable pageable = PageRequest.of(page, Math.min(size, 50), parseSort(sort));
+        Page<Review> reviews = reviewRepository.findActiveByProductId(productId, pageable);
+
+        //resolve usernames in one query
+        Set<Long> userIds = reviews.getContent().stream().map(Review::getUserId).collect(Collectors.toSet());
+        Map<Long, String> usernames = userRepository.findAllById(userIds).stream().collect(
+                Collectors.toMap(User::getId, User::getUsername));
+        return reviews.map(r->toReviewResponse(r, usernames.getOrDefault(r.getUserId(), "")));
+    }
+
+    public Page<MyReviewResponse> listForUser(String username, int page, int size, String sort){
+        User user = requireUser(username);
+        Pageable pageable = PageRequest.of(page, Math.min(size, 50), parseSort(sort));
+        Page<Review> reviews = reviewRepository.findVisibleToUser(user.getId(), pageable);
+        Set<Long> productIds = reviews.getContent().stream()
+                .map(Review::getProductId).collect(Collectors.toSet());
+        Map<Long, String> productNames = productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, Product::getName));
+        return reviews.map(r->{
+            boolean edited = !r.getCreatedAt().equals(r.getUpdatedAt());
+            return new MyReviewResponse(r.getId(), r.getProductId(), productNames.getOrDefault(r.getProductId(), ""),
+                    r.getRating(), r.getComment(), r.getCreatedAt(), r.getUpdatedAt(), edited, r.isDeletedByAdmin());
+        });
+    }
+
+    public Map<Long, RatingSummary> summariesFor(Collection<Long> productIds){
+        if(productIds == null || productIds.isEmpty()){
+            return Collections.emptyMap();
+        }
+        return reviewRepository.aggregateForProductIds(productIds).stream().collect(Collectors.toMap(RatingSummary::getProductId, s->s));
+    }
+
+    private Sort parseSort(String sort){
+        return switch (sort == null? "newest":sort){
+            case "newest" -> Sort.by(Sort.Order.desc("createdAt"));
+            case "oldest" -> Sort.by(Sort.Order.asc("createdAt"));
+            case "highest"-> Sort.by(Sort.Order.desc("rating"), Sort.Order.desc("createdAt"));
+            case "lowest" -> Sort.by(Sort.Order.asc("rating"), Sort.Order.desc("createdAt"));
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_SORT");
+        };
+    }
+
+    public Page<AdminReviewResponse> listForAdmin(String productName, String username, boolean hiddenOnly,
+                                                  int page, int size, String sort){
+        Pageable pageable = PageRequest.of(page, Math.min(size, 50), parseSort(sort));
+        Collection<Long> productIdFilter = null;
+        if(productName != null && !productName.isBlank()){
+            productIdFilter = productRepository.findByNameContainingIgnoreCase(productName.trim())
+                    .stream().map(Product::getId).collect(Collectors.toList());
+            if(productIdFilter.isEmpty()) return Page.empty(pageable);
+        }
+        Collection<Long> userIdFilter = null;
+        if(username != null && !username.isBlank()){
+            userIdFilter = userRepository.findByUsernameContainingIgnoreCase(username.trim())
+                    .stream().map(User::getId).collect(Collectors.toList());
+            if(userIdFilter.isEmpty()) return Page.empty(pageable);
+        }
+        boolean allProducts = (productIdFilter == null);
+        boolean allUsers = (userIdFilter == null);
+        Collection<Long> productIds = productIdFilter != null ? productIdFilter : java.util.List.of(-1L);
+        Collection<Long> userIds = userIdFilter != null ? userIdFilter : java.util.List.of(-1L);
+        Page<Review> reviews = reviewRepository.findForAdmin(allProducts, productIds, allUsers, userIds, hiddenOnly, pageable);
+
+        Set<Long> resultProductIds = reviews.getContent().stream().map(Review::getProductId).collect(Collectors.toSet());
+        Set<Long> resultUserIds = reviews.getContent().stream().map(Review::getUserId).collect(Collectors.toSet());
+        Map<Long, String> productNames = productRepository.findAllById(resultProductIds).stream()
+                .collect(Collectors.toMap(Product::getId, Product::getName));
+        Map<Long, String> usernames = userRepository.findAllById(resultUserIds).stream().collect(Collectors.toMap(User::getId, User::getUsername));
+        return reviews.map(r->{
+            AdminReviewResponse.Status status;
+            if(r.getDeletedAt() == null){
+                status = AdminReviewResponse.Status.ACTIVE;
+            }else if(r.isDeletedByAdmin()){
+                status = AdminReviewResponse.Status.HIDDEN_BY_ADMIN;
+            }else{
+                status = AdminReviewResponse.Status.DELETED_BY_USER;
+            }
+            return new AdminReviewResponse(r.getId(), r.getProductId(), productNames.getOrDefault(r.getProductId(), ""),
+                    r.getUserId(), usernames.getOrDefault(r.getUserId(), ""), r.getRating(), r.getComment(),
+                    r.getCreatedAt(), r.getUpdatedAt(), status);
+        });
+    }
+
+    private User requireUser(String username){
+        return  userRepository.findByUsername(username)
+                .orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED, "USER_NOT_FOUND"));
+    }
+
 }
 
 

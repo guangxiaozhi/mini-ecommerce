@@ -39,4 +39,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long>{
         where r.deletedAt is null and r.productId in :productIds group by r.productId
     """)
     List<RatingSummary> aggregateForProductIds(@Param("productIds") Collection<Long> productIds);
+
+    @Query("""
+        select r from Review r
+        where (:allProducts = true or r.productId in :productIds)
+          and (:allUsers = true or r.userId in :userIds)
+          and (:hiddenOnly = false or (r.deletedAt is not null and r.deletedByAdmin = true))
+    """)
+    Page<Review> findForAdmin(@Param("allProducts") boolean allProducts,
+                              @Param("productIds") Collection<Long> productIds,
+                              @Param("allUsers") boolean allUsers,
+                              @Param("userIds") Collection<Long> userIds,
+                              @Param("hiddenOnly") boolean hiddenOnly,
+                              Pageable pageable);
 }

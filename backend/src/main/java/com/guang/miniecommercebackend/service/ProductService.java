@@ -1,13 +1,6 @@
 package com.guang.miniecommercebackend.service;
 
-import com.guang.miniecommercebackend.dto.ProductImageResponse;
-import com.guang.miniecommercebackend.dto.ProductImageRequest;
-import com.guang.miniecommercebackend.dto.ProductBulletResponse;
-import com.guang.miniecommercebackend.dto.ProductBulletRequest;
-import com.guang.miniecommercebackend.dto.ShippingOptionResponse;
-import com.guang.miniecommercebackend.dto.ShippingOptionRequest;
-import com.guang.miniecommercebackend.dto.ProductResponse;
-import com.guang.miniecommercebackend.dto.ProductUpsertRequest;
+import com.guang.miniecommercebackend.dto.*;
 import com.guang.miniecommercebackend.entity.Product;
 import com.guang.miniecommercebackend.entity.ProductImage;
 import com.guang.miniecommercebackend.entity.ProductBullet;
@@ -23,8 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ProductService {
@@ -34,42 +30,44 @@ public class ProductService {
     private final ProductBulletRepository productBulletRepository;
     private final ShippingOptionRepository shippingOptionRepository;
     private final InventoryRepository inventoryRepository;
+    private final ReviewService reviewService;
 
     public ProductService(ProductRepository productRepository,
                           ProductImageRepository productImageRepository,
                           ProductBulletRepository productBulletRepository,
                           ShippingOptionRepository shippingOptionRepository,
-                          InventoryRepository inventoryRepository) {
+                          InventoryRepository inventoryRepository,
+                          ReviewService reviewService) {
         this.productRepository = productRepository;
         this.productImageRepository = productImageRepository;
         this.productBulletRepository = productBulletRepository;
         this.shippingOptionRepository = shippingOptionRepository;
         this.inventoryRepository = inventoryRepository;
+        this.reviewService = reviewService;
     }
 
     // ===== Public catalog (existing) =====
     public List<ProductResponse> listActiveProducts() {
-        return productRepository.findByActiveTrueOrderByIdAsc().stream()
-                .map(this::toResponse)
-                .toList();
+        List<Product> products = productRepository.findByActiveTrueOrderByIdAsc();
+        return attachRatings(products);
     }
 
     public ProductResponse getActiveProduct(Long id) {
         Product product = productRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
-        return toResponse(product);
+        return attachRatings(List.of(product)).get(0);
     }
 
     // ===== Admin CRUD (new) =====
     public List<ProductResponse> listAllProductsForAdmin() {
-        return productRepository.findAll().stream()
+        List<Product> products = productRepository.findAll().stream()
                 .sorted(Comparator.comparing(Product::getId))
-                .map(this::toResponse)
                 .toList();
+        return attachRatings(products);
     }
     public ProductResponse getProductForAdmin(Long id) {
         Product product = getByIdOr404(id);
-        return toResponse(product);
+        return attachRatings(List.of(product)).get(0);
     }
     public ProductResponse createProduct(ProductUpsertRequest req) {
         Product p = new Product();
@@ -234,5 +232,23 @@ public class ProductService {
                 .toList();
         response.setShippingOptions(shippingOptions);
         return response;
+    }
+
+    private List<ProductResponse> attachRatings(List<Product> products){
+        List<Long> ids = products.stream().map(Product::getId).toList();
+        Map<Long, RatingSummary> summaries = reviewService.summariesFor(ids);
+        return products.stream().map(p->{
+            ProductResponse resp = toResponse(p);
+            RatingSummary s = summaries.get(p.getId());
+            if (s != null && s.getReviewCount() != null && s.getReviewCount() > 0) {
+                resp.setRatingAvg(BigDecimal.valueOf(s.getAvgRating())
+                        .setScale(1, RoundingMode.HALF_UP));
+                resp.setReviewCount(s.getReviewCount());
+            }else{
+                resp.setRatingAvg(null);
+                resp.setReviewCount(0L);
+            }
+            return resp;
+        }).toList();
     }
 }

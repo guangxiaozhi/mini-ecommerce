@@ -1,0 +1,196 @@
+/* ── Page shell ── */
+.arp-page {
+    padding: 0;
+}
+
+.arp-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
+}
+
+/* ── Card ── */
+.arp-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+}
+
+.arp-card__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
+}
+
+/* ── Filter bar ── */
+.arp-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+/* ── Inputs ── */
+.arp-input {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border 0.15s;
+    flex: 0 0 160px;
+    min-width: 0;
+}
+
+.arp-input:focus {
+    border-color: #5c6bc0;
+}
+
+/* ── Checkbox label ── */
+.arp-label-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+}
+
+/* ── Buttons ── */
+.arp-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1.5px solid #5c6bc0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    color: #5c6bc0;
+    white-space: nowrap;
+}
+
+.arp-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.arp-btn:hover:not(:disabled) {
+    background: #5c6bc0;
+    color: #fff;
+}
+
+.arp-btn--primary {
+    background: #5c6bc0;
+    color: #fff;
+    border-color: #5c6bc0;
+}
+
+.arp-btn--primary:hover:not(:disabled) {
+    background: #4a59af;
+    border-color: #4a59af;
+    color: #fff;
+}
+
+.arp-btn--sm {
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+/* ── Error banner ── */
+.arp-error {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: #ffe8e8;
+    border: 1px solid #f2bcbc;
+    color: #9a1e1e;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+/* ── State messages ── */
+.arp-state {
+    padding: 20px 0;
+    color: #888;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ── Table ── */
+.arp-table-wrap {
+    overflow-x: auto;
+}
+
+.arp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.arp-table th {
+    text-align: left;
+    padding: 8px 10px;
+    color: #555;
+    font-weight: 600;
+    border-bottom: 2px solid #f0f0f0;
+    white-space: nowrap;
+}
+
+.arp-table td {
+    padding: 10px;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: middle;
+}
+
+.arp-table--compact td {
+    padding: 7px 10px;
+}
+
+.arp-comment-cell {
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+
+.arp-row--inactive {
+    opacity: 0.6;
+}
+
+/* ── Status badges ── */
+.arp-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: #e8eaf6;
+    color: #3949ab;
+}
+
+.arp-badge--active   { background: #e8f5e9; color: #2e7d32; }
+.arp-badge--hidden   { background: #fce4ec; color: #880e4f; }
+.arp-badge--deleted  { background: #eeeeee; color: #424242; }
+
+/* ── Pagination ── */
+.arp-pagination {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.arp-pagination__info {
+    font-size: 13px;
+    color: #555;
+}

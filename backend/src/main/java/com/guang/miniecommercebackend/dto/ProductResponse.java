@@ -18,6 +18,8 @@ public class ProductResponse {
     private List<ProductImageResponse> images;
     private List<ProductBulletResponse> bullets;
     private List<ShippingOptionResponse> shippingOptions;
+    private BigDecimal ratingAvg;
+    private long reviewCount;
 
     public ProductResponse() {
     }
@@ -98,4 +100,10 @@ public class ProductResponse {
     public List<ShippingOptionResponse> getShippingOptions() { return shippingOptions; }
     public void setShippingOptions(List<ShippingOptionResponse> shippingOptions) { this.shippingOptions =
             shippingOptions; }
+
+    public BigDecimal getRatingAvg(){return ratingAvg;}
+    public void setRatingAvg(BigDecimal ratingAvg){this.ratingAvg = ratingAvg;}
+
+    public long getReviewCount(){return reviewCount;}
+    public void setReviewCount(long reviewCount){this.reviewCount = reviewCount;}
 }

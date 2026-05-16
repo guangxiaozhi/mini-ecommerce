@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProduct } from '../../api/products';
+import Stars from "../Stars/Stars.jsx";
+import {listProductReviews} from "../../api/reviews.js";
 import './ProductDetail.css';
 
 const COLORS = [
@@ -20,6 +22,84 @@ function stockInfo(stock) {
     if (stock <= 0) return { label: 'Out of Stock',        cls: 'pd-stock--out' };
     if (stock <= 5) return { label: `Only ${stock} left!`, cls: 'pd-stock--low' };
     return              { label: 'In Stock',               cls: 'pd-stock--ok'  };
+}
+
+function Reviews({productId, ratingAvg, reviewCount}){
+    const [page, setPage] = useState(0);
+    const [sort, setSort] = useState('newest');
+    const [data, setData] = useState({content:[], totalPages:0, totalElements:0});
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(()=>{
+        let cancelled = false;
+        setLoading(true);
+        setError(null);
+        listProductReviews(productId, {page,size:10, sort})
+            .then(d=>{if(!cancelled) setData(d);})
+            .catch(e=>{if(!cancelled) setError(e.message);})
+            .finally(()=>{if(!cancelled) setLoading(false);});
+        return ()=>{cancelled = true;};
+    }, [productId, page, sort]);
+
+    function handleSort(e) {
+        setSort(e.target.value);
+        setPage(0);
+    }
+
+    return(
+        <section className="pd-reviews">
+            <h2 className="pd-reviews__title">Customer Reviews</h2>
+            <div className="pd-reviews__summary">
+                {reviewCount > 0
+                    ? <>
+                        <Stars rating={ratingAvg ?? 0} size="lg" />
+                        <span className="pd-reviews__avg">{Number(ratingAvg).toFixed(1)} out of 5</span>
+                        <span className="pd-reviews__count">({reviewCount.toLocaleString()} ratings)</span>
+                    </>
+                    : <span className="pd-reviews__none">No reviews yet</span>}
+             </div>
+             {reviewCount > 0 && (
+                 <div className="pd-reviews__controls">
+                     <label className="pd-reviews__sort-label">
+                         Sort by:&nbsp;
+                         <select value={sort} onChange={handleSort} className="pd-reviews__sort-select">
+                             <option value="newest">Newest</option>
+                             <option value="oldest">Oldest</option>
+                             <option value="highest">Highest rated</option>
+                             <option value="lowest">Lowest rated</option>
+                         </select>
+                     </label>
+                 </div>
+             )}
+             {error && <div className="pd-reviews__error">{error}</div>}
+             {loading && <div className="pd-reviews__loading">Loading…</div>}
+             {!loading && data.content.length === 0 && reviewCount === 0 && (
+                <p className="pd-reviews__empty">Be the first to review this product.</p>
+             )}
+             <ul className="pd-reviews__list">
+                 {data.content.map(r => (
+                     <li key={r.id} className="pd-review">
+                         <div className="pd-review__head">
+                             <Stars rating={r.rating} size="sm" />
+                             <span className="pd-review__user">{r.username}</span>
+                             {r.verifiedPurchase && <span className="pd-review__badge">Verified Purchase</span>}
+                             {r.edited && <span className="pd-review__edited">(edited)</span>}
+                         </div>
+                         <p className="pd-review__comment">{r.comment}</p>
+                         <p className="pd-review__date">{new Date(r.createdAt).toLocaleDateString()}</p>
+                     </li>
+                 ))}
+             </ul>
+             {data.totalPages > 1 && (
+                 <div className="pd-reviews__pager">
+                     <button disabled={page === 0} onClick={() => setPage(p=> p - 1)}>Prev</button>
+                     <span>Page {page + 1} of {data.totalPages}</span>
+                     <button disabled={page + 1 >= data.totalPages} onClick ={() => setPage(p => p + 1)}>Next</button>
+                 </div>
+             )}
+        </section>
+    );
 }
 
 export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {

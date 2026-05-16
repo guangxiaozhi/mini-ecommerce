@@ -600,3 +600,20 @@
     text-align: right;
     max-width: 20rem;
 }
+
+.order-detail__review-row td { background: #fafafa; padding: 12px 16px; }
+.order-detail__review-loading { color: #6b7280; font-size: 13px; }
+.order-detail__review-error { color: #c0392b; font-size: 13px; margin-top: 4px; }
+.order-detail__review-hidden { color: #6b7280; font-size: 13px; font-style: italic; }
+.order-detail__review-form { display: flex; flex-direction: column; gap: 8px; max-width: 600px; }
+.order-detail__review-rating { display: flex; gap: 4px; }
+.order-detail__review-star { font-size: 22px; background: none; border: none; color: #d1d5db; cursor: pointer; padding: 0 2px; }
+.order-detail__review-star--on { color: #f5a623; }
+.order-detail__review-textarea { width: 100%; resize: vertical; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; }
+.order-detail__review-counter { font-size: 12px; color: #6b7280; align-self: flex-end; }
+.order-detail__review-actions { display: flex; gap: 8px; }
+.order-detail__review-actions button { padding: 6px 14px; }
+.order-detail__review-existing { max-width: 600px; }
+.order-detail__review-existing-head { display: flex; gap: 8px; align-items: center; }
+.order-detail__review-existing-label { font-weight: 600; }
+.order-detail__review-existing-comment { margin: 6px 0; }
