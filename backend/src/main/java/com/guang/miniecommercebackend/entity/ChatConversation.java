@@ -4,7 +4,13 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="t_chat_conversation")
+@Table(
+        name = "t_chat_conversation",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_chat_inquiry_user_product",
+                columnNames = { "type", "product_id", "created_by_user_id" }
+        )
+)
 public class ChatConversation {
 
     @Id
