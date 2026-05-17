@@ -21,6 +21,8 @@ import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx";
 import PaymentPage from "./components/PaymentPage/PaymentPage.jsx";
 import MyReviewsPage from "./components/MyReviewsPage/MyReviewsPage.jsx";
 import AdminReviewsPage from "./components/AdminReviewPage/AdminReviewPage.jsx";
+import ChatRoomPage from './components/ChatRoomPage/ChatRoomPage.jsx'
+
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -98,6 +100,9 @@ function App() {
           navigate('/',{replace:true})
       }
       if (location.pathname.startsWith('/orders')){
+          navigate('/',{replace:true})
+      }
+      if (location.pathname.startsWith('/chat')){
           navigate('/',{replace:true})
       }
   }
@@ -276,6 +281,15 @@ function App() {
             <Route
                 path="/account/reviews"
                 element={<MyReviewsPage onNeedAuth={() => setShowLogin(true)} />}
+            />
+            <Route
+                path="/chat/:conversationId"
+                  element={
+                    <ChatRoomPage
+                      userName={userName}
+                      onNeedAuth={() => { setMsg(''); setAuthOpen(true) }}
+                    />
+                  }
             />
         </Routes>
     </>

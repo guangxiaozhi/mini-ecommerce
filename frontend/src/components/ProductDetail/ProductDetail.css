@@ -358,6 +358,22 @@
     background: rgba(0, 0, 0, 0.75);
 }
 
+.pd-btn-chat {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #2563eb;
+}
+.pd-btn-chat:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
  .pd-reviews { margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb; }
  .pd-reviews__title { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
  .pd-reviews__summary { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
