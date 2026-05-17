@@ -13,6 +13,7 @@ import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.dto.CreateChatConversationRequest;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,6 +32,15 @@ public class ChatService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+
+    @Value("${chat.bot.username:chat_bot}")
+    private String chatBotUsername;
+
+    private User getBotUserOr404() {
+        return userRepository.findByUsername(chatBotUsername)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "chat bot user not found"));
+    }
 
     public ChatService(ChatConversationRepository chatConversationRepository,
                        ChatParticipantRepository chatParticipantRepository,
@@ -96,6 +106,27 @@ public class ChatService {
         }
     }
 
+    private void ensureBotParticipant(ChatConversation conv) {
+        User bot = getBotUserOr404();
+        if (!chatParticipantRepository.existsByConversationIdAndUserId(conv.getId(), bot.getId())) {
+            ChatParticipant p = new ChatParticipant();
+            p.setConversationId(conv.getId());
+            p.setUserId(bot.getId());
+            p.setRole(ChatParticipantRole.BOT);
+            chatParticipantRepository.save(p);
+        }
+    }
+
+    private void seedBotWelcomeMessage(ChatConversation conv) {
+        User bot = getBotUserOr404();
+        ChatMessage welcome = new ChatMessage();
+        welcome.setConversationId(conv.getId());
+        welcome.setSenderUserId(bot.getId());
+        welcome.setType(ChatMessageType.TEXT);
+        welcome.setContent("Hi, this is our virtual assistant. How can I help you today? \n If you need human support, please reply “Speak to an Agent”.");
+        chatMessageRepository.save(welcome);
+    }
+
     public record CreateConversationOutcome(boolean created, ChatConversationResponse response) {}
 
     @Transactional
@@ -113,6 +144,7 @@ public class ChatService {
             if (existing.isPresent()) {
                 conv = existing.get();
                 ensureCustomerParticipant(conv, user);
+                ensureBotParticipant(conv);
                 return new CreateConversationOutcome(false, toConversationResponse(conv));
             }
 
@@ -123,6 +155,8 @@ public class ChatService {
             conv = chatConversationRepository.save(c);
 
             ensureCustomerParticipant(conv, user);
+            ensureBotParticipant(conv);
+            seedBotWelcomeMessage(conv);
             return new CreateConversationOutcome(true, toConversationResponse(conv));
         } else if (req.getType() == ChatConversationType.INQUIRY) {
             if (req.getProductId() == null) {
@@ -140,6 +174,7 @@ public class ChatService {
             if (existingInquiry.isPresent()) {
                 conv = existingInquiry.get();
                 ensureCustomerParticipant(conv, user);
+                ensureBotParticipant(conv);
                 return new CreateConversationOutcome(false, toConversationResponse(conv));
             }
 
@@ -150,6 +185,8 @@ public class ChatService {
             conv = chatConversationRepository.save(c);
 
             ensureCustomerParticipant(conv, user);
+            ensureBotParticipant(conv);
+            seedBotWelcomeMessage(conv);
             return new CreateConversationOutcome(true, toConversationResponse(conv));
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unsupported conversation type");
@@ -186,6 +223,17 @@ public class ChatService {
         msg.setType(ChatMessageType.TEXT);
         msg.setContent(req.getContent().trim());
         ChatMessage saved = chatMessageRepository.save(msg);
+
+        if (!chatParticipantRepository.existsByConversationIdAndRole(
+                conversationId, ChatParticipantRole.HUMAN_AGENT)) {
+            User bot = getBotUserOr404();
+            ChatMessage reply = new ChatMessage();
+            reply.setConversationId(conversationId);
+            reply.setSenderUserId(bot.getId());
+            reply.setType(ChatMessageType.TEXT);
+            reply.setContent("We have received your message. Our customer service assistant will get back to you as soon as possible.\n");
+            chatMessageRepository.save(reply);
+        }
 
         return toMessageResponse(saved);
     }

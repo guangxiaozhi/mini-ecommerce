@@ -21,3 +21,7 @@ server:
 jwt:
     secret: YOUR_JWT_SECRET
     expire-minutes: 120
+
+chat:
+    bot:
+        username: chat_bot
