@@ -104,6 +104,11 @@ export default function UserProfile({ onMessage }) {
                                     </Link>
                                 </li>
                                 <li>
+                                  <Link className="profile-links__item" to="/chat">
+                                    <span className="profile-links__label">Messages</span>
+                                  </Link>
+                                </li>
+                                <li>
                                     <Link className="profile-links__item" to="/account/reviews">
                                         <span className="profile-links__label">My reviews</span>
                                     </Link>

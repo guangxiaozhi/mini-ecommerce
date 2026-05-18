@@ -1,27 +1,28 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { getMe} from "./api/auth.js";
-import {addToCart, getCart} from './api/cart.js';
+import { getMe} from "./api/auth.js"
+import {addToCart, getCart} from './api/cart.js'
 import './App.css'
 import UserProfile from './components/UserProfile/UserProfile.jsx'
 import Header from './components/Header/Header.jsx'
 import AuthModal from './components/AuthModal/AuthModal.jsx'
-import AdminProductsPage from "./components/AdminProductsPage/AdminProductsPage.jsx";
+import AdminProductsPage from "./components/AdminProductsPage/AdminProductsPage.jsx"
 import ProductCatalog from './components/ProductCatalog/ProductCatalog.jsx'
-import Cart from "./components/Cart/Cart.jsx";
+import Cart from "./components/Cart/Cart.jsx"
 import RequireAdmin from './components/RequireAdmin/RequireAdmin.jsx'
-import ProductDetail from "./components/ProductDetail/ProductDetail.jsx";
-import AdminLayout from "./components/AdminLayout/AdminLayout.jsx";
-import AdminDashboard from "./components/AdminDashboard/AdminDashboard.jsx";
-import AdminInventoryPage from "./components/AdminInventoryPage/AdminInventoryPage.jsx";
-import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx";
-import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx";
-import OrderListPage from "./components/OrderListPage/OrderListPage.jsx";
-import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx";
-import PaymentPage from "./components/PaymentPage/PaymentPage.jsx";
+import ProductDetail from "./components/ProductDetail/ProductDetail.jsx"
+import AdminLayout from "./components/AdminLayout/AdminLayout.jsx"
+import AdminDashboard from "./components/AdminDashboard/AdminDashboard.jsx"
+import AdminInventoryPage from "./components/AdminInventoryPage/AdminInventoryPage.jsx"
+import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx"
+import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx"
+import OrderListPage from "./components/OrderListPage/OrderListPage.jsx"
+import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx"
+import PaymentPage from "./components/PaymentPage/PaymentPage.jsx"
 import MyReviewsPage from "./components/MyReviewsPage/MyReviewsPage.jsx";
 import AdminReviewsPage from "./components/AdminReviewPage/AdminReviewPage.jsx";
 import ChatRoomPage from './components/ChatRoomPage/ChatRoomPage.jsx'
+import ChatListPage from './components/ChatListPage/ChatListPage.jsx'
 
 
 function App() {
@@ -279,8 +280,28 @@ function App() {
                 }
             />
             <Route
-                path="/account/reviews"
-                element={<MyReviewsPage onNeedAuth={() => setShowLogin(true)} />}
+              path="/chat"
+              element={
+                <ChatListPage
+                  userName={userName}
+                  onNeedAuth={() => {
+                    setMsg('')
+                    setAuthOpen(true)
+                  }}
+                />
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ChatListPage
+                  userName={userName}
+                  onNeedAuth={() => {
+                    setMsg('')
+                    setAuthOpen(true)
+                  }}
+                />
+              }
             />
             <Route
                 path="/chat/:conversationId"
@@ -290,6 +311,10 @@ function App() {
                       onNeedAuth={() => { setMsg(''); setAuthOpen(true) }}
                     />
                   }
+            />
+            <Route
+                path="/account/reviews"
+                element={<MyReviewsPage onNeedAuth={() => setShowLogin(true)} />}
             />
         </Routes>
     </>
