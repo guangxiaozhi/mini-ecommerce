@@ -617,3 +617,18 @@
 .order-detail__review-existing-head { display: flex; gap: 8px; align-items: center; }
 .order-detail__review-existing-label { font-weight: 600; }
 .order-detail__review-existing-comment { margin: 6px 0; }
+/* 订单客服按钮：与 Return 区分，风格接近商品页「联系客服」 */
+.order-detail__chat-btn {
+    color: #2563eb;
+    border-color: #2563eb;
+    background: #fff;
+}
+
+.order-detail__chat-btn:hover:not(:disabled) {
+    background: #eff6ff;
+}
+
+.order-detail__chat-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

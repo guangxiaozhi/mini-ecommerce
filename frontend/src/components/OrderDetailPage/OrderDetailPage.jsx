@@ -3,6 +3,7 @@
 import { Link, useParams, useNavigate} from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { getOrder, createReturn } from '../../api/orders.js'
+import { createConversation } from '../../api/chat.js'
 import { getEligibility, createReview, updateReview, deleteReview} from "../../api/reviews.js";
 import Stars from "../Stars/Stars.jsx";
 import './OrderDetailPage.css'
@@ -335,6 +336,7 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
     const [error, setError] = useState(null)
     const token = localStorage.getItem('token')
     const [modalOpen, setModalOpen] = useState(false)
+    const [chatLoading, setChatLoading] = useState(false)
     const navigate = useNavigate()
 
     async function loadOrder(id) {
@@ -356,6 +358,25 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
             setError(e.message ?? 'Failed to load the order')
         } finally {
             setLoading(false)
+        }
+    }
+
+    async function handleContactSupportAboutOrder() {
+        if (!token) {
+            onNeedAuth?.()
+            return
+        }
+        setChatLoading(true)
+        try {
+            const conv = await createConversation(token, {
+                type: 'ORDER',
+                orderId: Number(orderId),
+            })
+            navigate(`/chat/${conv.id}`, { state: { conversation: conv } })
+        } catch (e) {
+            setError(e.message ?? 'Could not start chat about this order.')
+        } finally {
+            setChatLoading(false)
         }
     }
 
@@ -505,6 +526,14 @@ export default function OrderDetailPage({ onNeedAuth, userName }) {
                                                     ↩ Return
                                                 </button>
                                             )}
+                                            <button
+                                                type="button"
+                                                className="order-detail__return-btn order-detail__chat-btn"
+                                                disabled={chatLoading}
+                                                onClick={handleContactSupportAboutOrder}
+                                            >
+                                                {chatLoading ? 'Starting chat...' : 'Contact support'}
+                                            </button>
                     </div>
                     {(order.status === 'CLOSED' || order.status === 'CANCELLED') && (
                         <p className="order-detail__status-hint" role="status">
