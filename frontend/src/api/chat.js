@@ -45,3 +45,10 @@ export function sendMessage(token, conversationId, content) {
     body: JSON.stringify({ content }),
   }).then(handleResponse)
 }
+
+export function transferToHuman(token, conversationId) {
+  return fetch(`${CHAT_BASE}/conversations/${conversationId}/transfer-to-human`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  }).then(handleResponse)
+}

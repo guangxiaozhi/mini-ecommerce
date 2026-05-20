@@ -101,4 +101,35 @@
   border-top: 1px solid #e5e7eb;
 }
 
-.chat-room__form input
+.chat-room__form input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.chat-room__form button[type="submit"] {
+  padding: 0.5rem 1rem;
+  /* 你原来的 submit 样式 */
+}
+
+.chat-room__transfer-btn {
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.chat-room__transfer-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chat-room__status-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+}

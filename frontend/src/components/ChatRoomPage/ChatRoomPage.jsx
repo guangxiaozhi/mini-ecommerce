@@ -1,13 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { listMessages, sendMessage, listConversations  } from '../../api/chat.js'
+import { listMessages, sendMessage, listConversations, transferToHuman } from '../../api/chat.js'
 import './ChatRoomPage.css'
 
-export default function ChatRoomPage({ userName, onNeedAuth }) {
+export default function ChatRoomPage({ onNeedAuth }) {
     const { conversationId } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
-    const conversation = location.state?.conversation
 
     const [myUserId, setMyUserId] = useState(
       () => location.state?.conversation?.createdByUserId ?? null
@@ -17,6 +16,10 @@ export default function ChatRoomPage({ userName, onNeedAuth }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [sending, setSending] = useState(false)
+    const [conversationStatus, setConversationStatus] = useState(
+      () => location.state?.conversation?.status ?? 'BOT'
+    )
+    const [transferring, setTransferring] = useState(false)
     const bottomRef = useRef(null)
 
     async function loadMessages() {
@@ -49,21 +52,50 @@ export default function ChatRoomPage({ userName, onNeedAuth }) {
     }, [conversationId])
 
     useEffect(() => {
-      if (myUserId != null) return
-
       const token = localStorage.getItem('token')
       if (!token) return
 
       listConversations(token, 0, 100)
         .then((page) => {
-          const list = page?.content ?? []
-          const conv = list.find((c) => String(c.id) === String(conversationId))
-          if (conv?.createdByUserId != null) {
+          const conv = (page?.content ?? []).find(
+            (c) => String(c.id) === String(conversationId)
+          )
+          if (!conv) return
+          if (myUserId == null && conv.createdByUserId != null) {
             setMyUserId(conv.createdByUserId)
+          }
+          if (conv.status != null) {
+            setConversationStatus(conv.status)
           }
         })
         .catch(() => {})
     }, [conversationId, myUserId])
+
+    async function handleTransfer() {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        onNeedAuth?.()
+        return
+      }
+      setTransferring(true)
+      setError(null)
+      try {
+        const updated = await transferToHuman(token, conversationId)
+        if (updated?.status) {
+          setConversationStatus(updated.status)
+        }
+        await loadMessages()
+      } catch (e) {
+        setError(e.message || 'Transfer failed')
+      } finally {
+        setTransferring(false)
+      }
+    }
+
+    function isTransferPhrase(text) {
+      const t = text.trim()
+      return t.toLowerCase() === 'speak to an agent' || t === '转人工'
+    }
 
     async function handleSend(e) {
       e.preventDefault()
@@ -74,6 +106,10 @@ export default function ChatRoomPage({ userName, onNeedAuth }) {
       setSending(true)
       try {
         await sendMessage(token, conversationId, text)
+
+        if (isTransferPhrase(text) && conversationStatus === 'BOT') {
+          setConversationStatus('WAITING_HUMAN')
+        }
         setInput('')
         await loadMessages()
       } catch (e) {
@@ -91,6 +127,24 @@ export default function ChatRoomPage({ userName, onNeedAuth }) {
     return (
       <div className="chat-room">
         <button type="button" onClick={() => navigate('/chat')}>← Back to conversations</button>
+        {conversationStatus === 'BOT' && (
+          <button
+            type="button"
+            className="chat-room__transfer-btn"
+            disabled={transferring}
+            onClick={handleTransfer}
+          >
+            {transferring ? 'Transferring...' : 'Speak to an agent'}
+          </button>
+        )}
+
+        {(conversationStatus === 'WAITING_HUMAN' || conversationStatus === 'ASSIGNED') && (
+          <p className="chat-room__status-hint">
+            {conversationStatus === 'WAITING_HUMAN'
+              ? 'Waiting for a human agent...'
+              : 'An agent is handling this chat.'}
+          </p>
+        )}
         {error && <p className="chat-room__error">{error}</p>}
         <div className="chat-room__messages">
           {messages.map((m) => {
@@ -116,5 +170,4 @@ export default function ChatRoomPage({ userName, onNeedAuth }) {
         </form>
       </div>
     )
-
-    }
+}

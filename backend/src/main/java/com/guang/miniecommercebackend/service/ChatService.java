@@ -36,6 +36,9 @@ public class ChatService {
     @Value("${chat.bot.username:chat_bot}")
     private String chatBotUsername;
 
+    private static final String TRANSFER_TO_HUMAN_SYSTEM_MESSAGE =
+            "Your request has been sent to our support team. Please wait for an agent.";
+
     private User getBotUserOr404() {
         return userRepository.findByUsername(chatBotUsername)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -79,6 +82,8 @@ public class ChatService {
         r.setProductId(c.getProductId());
         r.setCreatedByUserId(c.getCreatedByUserId());
         r.setCreatedAt(c.getCreatedAt());
+        r.setStatus(c.getStatus() != null ? c.getStatus().name() : ChatConversationStatus.BOT.name());
+        r.setAssignedAgentUserId(c.getAssignedAgentUserId());
         return r;
     }
 
@@ -125,6 +130,16 @@ public class ChatService {
         welcome.setType(ChatMessageType.TEXT);
         welcome.setContent("Hi, this is our virtual assistant. How can I help you today? \n If you need human support, please reply “Speak to an Agent”.");
         chatMessageRepository.save(welcome);
+    }
+
+    private void insertSystemMessage(ChatConversation conv, String content) {
+        User bot = getBotUserOr404();
+        ChatMessage sys = new ChatMessage();
+        sys.setConversationId(conv.getId());
+        sys.setSenderUserId(bot.getId());
+        sys.setType(ChatMessageType.SYSTEM);
+        sys.setContent(content);
+        chatMessageRepository.save(sys);
     }
 
     public record CreateConversationOutcome(boolean created, ChatConversationResponse response) {}
@@ -209,13 +224,18 @@ public class ChatService {
     public ChatMessageResponse sendMessage(String username, Long conversationId, SendChatMessageRequest req) {
         User user = getUserByUsernameOr404(username);
 
-        if (!chatConversationRepository.existsById(conversationId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "conversation not found");
-        }
+        ChatConversation conv = chatConversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "conversation not found"));
 
         if (!chatParticipantRepository.existsByConversationIdAndUserId(conversationId, user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a participant of this conversation");
         }
+
+        ChatConversationStatus st = conv.getStatus() != null ? conv.getStatus() : ChatConversationStatus.BOT;
+
+        boolean botMayReply = st == ChatConversationStatus.BOT
+                && !chatParticipantRepository.existsByConversationIdAndRole(
+                conversationId, ChatParticipantRole.HUMAN_AGENT);
 
         ChatMessage msg = new ChatMessage();
         msg.setConversationId(conversationId);
@@ -224,8 +244,18 @@ public class ChatService {
         msg.setContent(req.getContent().trim());
         ChatMessage saved = chatMessageRepository.save(msg);
 
-        if (!chatParticipantRepository.existsByConversationIdAndRole(
-                conversationId, ChatParticipantRole.HUMAN_AGENT)) {
+        String text = req.getContent().trim();
+
+        if ("Speak to an Agent".equalsIgnoreCase(text) || "转人工".equals(text)) {
+            if (conv.getStatus() == null || conv.getStatus() == ChatConversationStatus.BOT) {
+                conv.setStatus(ChatConversationStatus.WAITING_HUMAN);
+                chatConversationRepository.save(conv);
+                insertSystemMessage(conv, TRANSFER_TO_HUMAN_SYSTEM_MESSAGE);
+            }
+            return toMessageResponse(saved);
+        }
+
+        if (botMayReply) {
             User bot = getBotUserOr404();
             ChatMessage reply = new ChatMessage();
             reply.setConversationId(conversationId);
@@ -236,6 +266,34 @@ public class ChatService {
         }
 
         return toMessageResponse(saved);
+    }
+
+    @Transactional
+    public ChatConversationResponse transferToHuman(String username, Long conversationId) {
+        User user = getUserByUsernameOr404(username);
+
+        ChatConversation conv = chatConversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "conversation not found"));
+
+        if (!chatParticipantRepository.existsByConversationIdAndUserId(conversationId, user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a participant of this conversation");
+        }
+
+        if (conv.getStatus() == ChatConversationStatus.WAITING_HUMAN
+                || conv.getStatus() == ChatConversationStatus.ASSIGNED) {
+            return toConversationResponse(conv);
+        }
+
+        if (conv.getStatus() == ChatConversationStatus.CLOSED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "conversation is closed");
+        }
+
+        conv.setStatus(ChatConversationStatus.WAITING_HUMAN);
+        chatConversationRepository.save(conv);
+
+        insertSystemMessage(conv, TRANSFER_TO_HUMAN_SYSTEM_MESSAGE);
+
+        return toConversationResponse(conv);
     }
 
     public Page<ChatConversationResponse> listMyConversations(String username, int page, int size) {

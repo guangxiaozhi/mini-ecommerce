@@ -307,7 +307,6 @@ function App() {
                 path="/chat/:conversationId"
                   element={
                     <ChatRoomPage
-                      userName={userName}
                       onNeedAuth={() => { setMsg(''); setAuthOpen(true) }}
                     />
                   }

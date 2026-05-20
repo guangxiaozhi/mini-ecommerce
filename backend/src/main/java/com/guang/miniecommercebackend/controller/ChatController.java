@@ -63,5 +63,11 @@ public class ChatController {
         return chatService.sendMessage(username, conversationId, body);
     }
 
-
+    @PostMapping("/conversations/{conversationId}/transfer-to-human")
+    public ChatConversationResponse transferToHuman(
+            Authentication auth,
+            @PathVariable("conversationId") Long conversationId) {
+        String username = (String) auth.getPrincipal();
+        return chatService.transferToHuman(username, conversationId);
+    }
 }

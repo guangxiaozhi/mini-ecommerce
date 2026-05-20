@@ -33,10 +33,20 @@ public class ChatConversation {
     @Column(name="created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private ChatConversationStatus status;
+
+    @Column(name = "assigned_agent_user_id")
+    private Long assignedAgentUserId;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = ChatConversationStatus.BOT;
         }
     }
 
@@ -58,4 +68,11 @@ public class ChatConversation {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
+    public ChatConversationStatus getStatus() { return status; }
+    public void setStatus(ChatConversationStatus status) { this.status = status; }
+
+    public Long getAssignedAgentUserId() { return assignedAgentUserId; }
+    public void setAssignedAgentUserId(Long assignedAgentUserId) {
+        this.assignedAgentUserId = assignedAgentUserId;
+    }
 }

@@ -10,6 +10,9 @@ public class ChatConversationResponse {
     private Long productId;
     private Long createdByUserId;
     private LocalDateTime createdAt;
+    private String status;
+    private Long assignedAgentUserId;
+
     public Long getId() {
         return id;
     }
@@ -45,5 +48,12 @@ public class ChatConversationResponse {
     }
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Long getAssignedAgentUserId() { return assignedAgentUserId; }
+    public void setAssignedAgentUserId(Long assignedAgentUserId) {
+        this.assignedAgentUserId = assignedAgentUserId;
     }
 }
