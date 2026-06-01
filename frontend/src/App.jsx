@@ -24,6 +24,7 @@ import AdminReviewsPage from "./components/AdminReviewPage/AdminReviewPage.jsx";
 import ChatRoomPage from './components/ChatRoomPage/ChatRoomPage.jsx'
 import ChatListPage from './components/ChatListPage/ChatListPage.jsx'
 import AdminChatPage from './components/AdminChatPage/AdminChatPage.jsx'
+import AdminChatRoomPage from './components/AdminChatRoomPage/AdminChatRoomPage.jsx'
 
 
 function App() {
@@ -228,6 +229,7 @@ function App() {
                                 <Route path="orders" element={<AdminOrdersPage />} />
                                 <Route path="users" element={<AdminUsersPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
                                 <Route path="chat" element={<AdminChatPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
+                                <Route path="chat/:conversationId" element={ <AdminChatRoomPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
                                 <Route path="reviews" element={<AdminReviewsPage />} />
                             </Routes>
                         </AdminLayout>

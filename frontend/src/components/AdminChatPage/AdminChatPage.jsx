@@ -176,7 +176,7 @@ export default function AdminChatPage({ userPermissions = [], isSuperAdmin = fal
                     <button
                       type="button"
                       className="acp-btn"
-                      onClick={() => navigate(`/admin/chat/${c.id}`)}
+                      onClick={() => navigate(`/admin/chat/${c.id}`, { state: { conversation: c } })}
                     >
                       Open
                     </button>
