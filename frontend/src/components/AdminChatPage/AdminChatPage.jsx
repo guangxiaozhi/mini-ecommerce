@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { listAdminConversations, assignConversation } from '../../api/adminChat.js'
 import './AdminChatPage.css'
 
@@ -18,15 +18,17 @@ export default function AdminChatPage({ userPermissions = [], isSuperAdmin = fal
     )
 
     const navigate = useNavigate()
+    const location = useLocation()
     const token = localStorage.getItem('token')
 
-    const [queueTab, setQueueTab] = useState('waiting') // 'waiting' | 'mine'
+    const [queueTab, setQueueTab] = useState('waiting') // 'waiting' | 'mine'| 'closed'
     const [conversations, setConversations] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
     const [assigningId, setAssigningId] = useState(null)
+    const loadSeqRef = useRef(0)
 
     const loadConversations = useCallback(async () => {
       if (!token) {
@@ -34,25 +36,40 @@ export default function AdminChatPage({ userPermissions = [], isSuperAdmin = fal
         setLoading(false)
         return
       }
+
+      const seq = ++loadSeqRef.current
       setLoading(true)
       setError(null)
+      setConversations([])
+
       try {
         const opts = {
           type: chatType,
           page,
           size: 20,
-          assignedToMe: queueTab === 'mine',
+          assignedToMe: queueTab === 'mine' || queueTab === 'closed',
         }
         if (queueTab === 'waiting') {
           opts.status = 'WAITING_HUMAN'
         }
+        if (queueTab === 'closed') {
+          opts.status = 'CLOSED'
+        }
+
         const data = await listAdminConversations(token, opts)
+
+        if (seq !== loadSeqRef.current) return
+
         setConversations(data?.content ?? [])
         setTotalPages(data?.totalPages ?? 1)
       } catch (e) {
+        if (seq !== loadSeqRef.current) return
         setError(e.message || 'Failed to load conversations')
+        setConversations([])
       } finally {
-        setLoading(false)
+        if (seq === loadSeqRef.current) {
+          setLoading(false)
+        }
       }
     }, [token, queueTab, chatType, page])
 
@@ -60,6 +77,13 @@ export default function AdminChatPage({ userPermissions = [], isSuperAdmin = fal
       loadConversations()
     }, [loadConversations])
 
+    useEffect(() => {
+      const tab = location.state?.queueTab
+      if (tab === 'mine' || tab === 'closed' || tab === 'waiting') {
+        setQueueTab(tab)
+        setPage(0)
+      }
+    }, [location.state?.queueTab])
     async function handleAssign(conversationId) {
       if (!token || assigningId != null) return
       setAssigningId(conversationId)
@@ -77,11 +101,15 @@ export default function AdminChatPage({ userPermissions = [], isSuperAdmin = fal
     function switchQueueTab(tab) {
       setQueueTab(tab)
       setPage(0)
+      setConversations([])
+      setError(null)
     }
 
     function switchChatType(type) {
       setChatType(type)
       setPage(0)
+      setConversations([])
+      setError(null)
     }
 
     if (!canViewAny) {
@@ -138,23 +166,34 @@ export default function AdminChatPage({ userPermissions = [], isSuperAdmin = fal
           >
             Mine
           </button>
+          <button
+            type="button"
+            className={`acp-tab${queueTab === 'closed' ? ' acp-tab--active' : ''}`}
+            onClick={() => switchQueueTab('closed')}
+          >
+            Closed
+          </button>
         </div>
 
         {error && <p className="acp-error" role="alert">{error}</p>}
         {loading && <p>Loading...</p>}
 
         {!loading && conversations.length === 0 && (
-          <p className="acp-empty">No conversations in this queue.</p>
+          <p className="acp-empty">
+            {queueTab === 'closed'
+              ? 'No closed conversations assigned to you.'
+              : 'No conversations in this queue.'}
+          </p>
         )}
 
         {!loading && conversations.length > 0 && (
-          <ul className="acp-list">
+          <ul className="acp-list" key={queueTab}>
             {conversations.map((c) => (
               <li key={c.id} className="acp-item">
                 <div className="acp-item__main">
                   <strong>#{c.id}</strong>
                   <span className="acp-item__type">{c.type}</span>
-                  <span className="acp-item__status">{c.status}</span>
+                  <span className="acp-item__status">{queueTab === 'closed' ? 'CLOSED' : c.status}</span>
                   {c.productId != null && <span>Product {c.productId}</span>}
                   {c.orderId != null && <span>Order {c.orderId}</span>}
                   <span className="acp-item__date">
@@ -181,6 +220,17 @@ export default function AdminChatPage({ userPermissions = [], isSuperAdmin = fal
                       Open
                     </button>
                   )}
+                    {queueTab === 'closed' && (
+                      <button
+                        type="button"
+                        className="acp-btn"
+                        onClick={() =>
+                          navigate(`/admin/chat/${c.id}`, { state: { conversation: { ...c, status: 'CLOSED' }, } })
+                        }
+                      >
+                        Open
+                      </button>
+                    )}
                 </div>
               </li>
             ))}

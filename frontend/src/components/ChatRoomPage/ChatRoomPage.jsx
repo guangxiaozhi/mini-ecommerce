@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { listMessages, sendMessage, listConversations, transferToHuman } from '../../api/chat.js'
+import { listMessages, sendMessage, listConversations, transferToHuman, reopenConversation } from '../../api/chat.js'
 import './ChatRoomPage.css'
 
 export default function ChatRoomPage({ onNeedAuth }) {
@@ -21,6 +21,29 @@ export default function ChatRoomPage({ onNeedAuth }) {
     )
     const [transferring, setTransferring] = useState(false)
     const bottomRef = useRef(null)
+    const [reopening, setReopening] = useState(false)
+
+    async function syncConversationMeta() {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      try {
+        const page = await listConversations(token, 0, 100)
+        const conv = (page?.content ?? []).find(
+          (c) => String(c.id) === String(conversationId)
+        )
+        if (!conv) return
+
+        if (myUserId == null && conv.createdByUserId != null) {
+          setMyUserId(conv.createdByUserId)
+        }
+        if (conv.status != null) {
+          setConversationStatus(conv.status)
+        }
+      } catch {
+        // 同步失败不打断聊天；下次轮询会再试
+      }
+    }
 
     async function loadMessages() {
       const token = localStorage.getItem('token')
@@ -31,6 +54,7 @@ export default function ChatRoomPage({ onNeedAuth }) {
       try {
         const page = await listMessages(token, conversationId, 0, 50)
         setMessages(page?.content ?? [])
+        await syncConversationMeta()
         setError(null)
       } catch (e) {
         setError(e.message || 'Failed to load messages')
@@ -51,25 +75,7 @@ export default function ChatRoomPage({ onNeedAuth }) {
       return () => clearInterval(timer)
     }, [conversationId])
 
-    useEffect(() => {
-      const token = localStorage.getItem('token')
-      if (!token) return
 
-      listConversations(token, 0, 100)
-        .then((page) => {
-          const conv = (page?.content ?? []).find(
-            (c) => String(c.id) === String(conversationId)
-          )
-          if (!conv) return
-          if (myUserId == null && conv.createdByUserId != null) {
-            setMyUserId(conv.createdByUserId)
-          }
-          if (conv.status != null) {
-            setConversationStatus(conv.status)
-          }
-        })
-        .catch(() => {})
-    }, [conversationId, myUserId])
 
     async function handleTransfer() {
       const token = localStorage.getItem('token')
@@ -92,6 +98,27 @@ export default function ChatRoomPage({ onNeedAuth }) {
       }
     }
 
+    async function handleReopen() {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        onNeedAuth?.()
+        return
+      }
+      setReopening(true)
+      setError(null)
+      try {
+        const updated = await reopenConversation(token, conversationId)
+        if (updated?.status) {
+          setConversationStatus(updated.status)
+        }
+        await loadMessages()
+      } catch (e) {
+        setError(e.message || 'Reopen failed')
+      } finally {
+        setReopening(false)
+      }
+    }
+
     function isTransferPhrase(text) {
       const t = text.trim()
       return t.toLowerCase() === 'speak to an agent' || t === '转人工'
@@ -99,6 +126,7 @@ export default function ChatRoomPage({ onNeedAuth }) {
 
     async function handleSend(e) {
       e.preventDefault()
+      if (conversationStatus === 'CLOSED') return
       const text = input.trim()
       if (!text || sending) return
       const token = localStorage.getItem('token')
@@ -138,12 +166,34 @@ export default function ChatRoomPage({ onNeedAuth }) {
           </button>
         )}
 
+        {conversationStatus === 'BOT' && (
+          <p className="chat-room__status-hint">
+            You are chatting with our virtual assistant. Need a human? Tap &quot;Speak to an agent&quot; above
+            or type &quot;Speak to an Agent&quot; or &quot;转人工&quot; in the box below.
+          </p>
+        )}
+
         {(conversationStatus === 'WAITING_HUMAN' || conversationStatus === 'ASSIGNED') && (
           <p className="chat-room__status-hint">
             {conversationStatus === 'WAITING_HUMAN'
               ? 'Waiting for a human agent...'
               : 'An agent is handling this chat.'}
           </p>
+        )}
+        {conversationStatus === 'CLOSED' && (
+          <>
+              <p className="chat-room__status-hint">
+                This conversation has been closed. You can still read the history below.
+              </p>
+              <button
+                type="button"
+                className="chat-room__transfer-btn"
+                disabled={reopening}
+                onClick={handleReopen}
+              >
+                {reopening ? 'Reopening...' : 'Continue conversation'}
+              </button>
+            </>
         )}
         {error && <p className="chat-room__error">{error}</p>}
         <div className="chat-room__messages">
@@ -159,15 +209,19 @@ export default function ChatRoomPage({ onNeedAuth }) {
           })}
           <div ref={bottomRef} />
         </div>
-        <form className="chat-room__form" onSubmit={handleSend}>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
-            maxLength={2000}
-          />
-          <button type="submit" disabled={sending}>{sending ? 'Sending...' : 'Send'}</button>
-        </form>
+        {conversationStatus !== 'CLOSED' && (
+          <form className="chat-room__form" onSubmit={handleSend}>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message..."
+              maxLength={2000}
+            />
+            <button type="submit" disabled={sending}>
+              {sending ? 'Sending...' : 'Send'}
+            </button>
+          </form>
+        )}
       </div>
     )
 }

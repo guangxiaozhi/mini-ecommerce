@@ -65,3 +65,11 @@ export function sendAdminMessage(token, conversationId, content) {
     body: JSON.stringify({ content }),
   }).then(handleResponse)
 }
+
+/** POST 关闭会话 */
+export function closeConversation(token, conversationId) {
+  return fetch(`${ADMIN_CHAT_BASE}/conversations/${conversationId}/close`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  }).then(handleResponse)
+}

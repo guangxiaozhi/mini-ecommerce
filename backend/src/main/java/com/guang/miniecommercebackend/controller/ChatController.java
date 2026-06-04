@@ -70,4 +70,12 @@ public class ChatController {
         String username = (String) auth.getPrincipal();
         return chatService.transferToHuman(username, conversationId);
     }
+
+    @PostMapping("/conversations/{conversationId}/reopen")
+    public ChatConversationResponse reopenConversation(
+            Authentication auth,
+            @PathVariable("conversationId") Long conversationId) {
+        String username = (String) auth.getPrincipal();
+        return chatService.reopenConversation(username, conversationId);
+    }
 }

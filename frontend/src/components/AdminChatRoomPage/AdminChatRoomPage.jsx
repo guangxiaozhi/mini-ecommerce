@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { listAdminMessages, sendAdminMessage, listAdminConversations } from '../../api/adminChat.js'
+import { listAdminMessages, sendAdminMessage, listAdminConversations, closeConversation } from '../../api/adminChat.js'
 import '../ChatRoomPage/ChatRoomPage.css'
 
 export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin = false }) {
@@ -21,6 +21,15 @@ export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin =
   const canReplyInquiry = isSuperAdmin || userPermissions.includes('CHAT_INQUIRY_REPLY')
   const canReplyOrder   = isSuperAdmin || userPermissions.includes('CHAT_ORDER_REPLY')
   const canReply = chatType === 'ORDER' ? canReplyOrder : canReplyInquiry
+
+  const canClose = isSuperAdmin || userPermissions.includes('CHAT_CONVERSATION_CLOSE')
+
+  const [conversationStatus, setConversationStatus] = useState(
+    () => location.state?.conversation?.status ?? 'ASSIGNED'
+  )
+  const [closing, setClosing] = useState(false)
+
+  const isClosed = conversationStatus === 'CLOSED'
 
   async function loadMessages() {
     const token = localStorage.getItem('token')
@@ -46,27 +55,44 @@ export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin =
     return () => clearInterval(timer)
   }, [conversationId])
 
-  useEffect(() => {
-    if (myAgentUserId != null) return
-    const token = localStorage.getItem('token')
-    if (!token) return
+    useEffect(() => {
+      if (myAgentUserId != null && conversationStatus === 'CLOSED') return
+      if (myAgentUserId != null && conversationStatus === 'ASSIGNED') return
+      const token = localStorage.getItem('token')
+      if (!token) return
 
-    listAdminConversations(token, { assignedToMe: true, page: 0, size: 100 })
-      .then((page) => {
-        const conv = (page?.content ?? []).find(
-          (c) => String(c.id) === String(conversationId)
-        )
-        if (conv?.assignedAgentUserId != null) {
-          setMyAgentUserId(conv.assignedAgentUserId)
+      async function fetchMeta() {
+        const statusesToTry =
+          conversationStatus === 'CLOSED' ? ['CLOSED', 'ASSIGNED'] : ['ASSIGNED', 'CLOSED']
+
+        for (const st of statusesToTry) {
+          try {
+            const page = await listAdminConversations(token, {
+              assignedToMe: true,
+              status: st,
+              page: 0,
+              size: 100,
+            })
+            const conv = (page?.content ?? []).find(
+              (c) => String(c.id) === String(conversationId)
+            )
+            if (!conv) continue
+            if (conv.status != null) setConversationStatus(conv.status)
+            if (conv.assignedAgentUserId != null) setMyAgentUserId(conv.assignedAgentUserId)
+            break
+          } catch {
+            // try next
+          }
         }
-      })
-      .catch(() => {})
-  }, [conversationId, myAgentUserId])
+      }
+
+      fetchMeta()
+    }, [conversationId, myAgentUserId, conversationStatus])
 
   async function handleSend(e) {
     e.preventDefault()
     const text = input.trim()
-    if (!text || sending || !canReply) return
+    if (!text || sending || !canReply || isClosed) return
 
     const token = localStorage.getItem('token')
     if (!token) {
@@ -86,6 +112,34 @@ export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin =
     }
   }
 
+  async function handleClose() {
+    if (!canClose || closing || isClosed) return
+    if (!window.confirm('Close this conversation? The customer will not be able to send new messages.')) {
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setError('Please sign in again.')
+      return
+    }
+
+    setClosing(true)
+    setError(null)
+    try {
+      const updated = await closeConversation(token, conversationId)
+      if (updated?.status) {
+        setConversationStatus(updated.status)
+      }
+      await loadMessages()
+      navigate('/admin/chat', { state: { queueTab: 'closed' } })
+    } catch (e) {
+      setError(e.message || 'Close failed')
+    } finally {
+      setClosing(false)
+    }
+  }
+
   if (loading) return <p>Loading...</p>
 
   return (
@@ -94,17 +148,30 @@ export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin =
         ← Back to queue
       </button>
 
+      {canClose && !isClosed && (
+        <button
+          type="button"
+          className="chat-room__transfer-btn"
+          disabled={closing}
+          onClick={handleClose}
+        >
+          {closing ? 'Closing...' : 'Close conversation'}
+        </button>
+      )}
+
       <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.1rem' }}>
         Conversation #{conversationId}
-        {location.state?.conversation?.status && (
+        {conversationStatus && (
           <span style={{ marginLeft: 8, fontWeight: 'normal', color: '#6b7280' }}>
-            · {location.state.conversation.status}
+            · {conversationStatus}
           </span>
         )}
       </h2>
 
       {error && <p className="chat-room__error">{error}</p>}
-
+      {isClosed && (
+        <p className="chat-room__status-hint">This conversation is closed.</p>
+      )}
       <div className="chat-room__messages">
         {messages.map((m) => {
           const isSystem = m.type === 'SYSTEM'
@@ -131,21 +198,21 @@ export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin =
         <div ref={bottomRef} />
       </div>
 
-      {canReply ? (
-        <form className="chat-room__form" onSubmit={handleSend}>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Reply as agent..."
-            maxLength={2000}
-          />
-          <button type="submit" disabled={sending}>
-            {sending ? 'Sending...' : 'Send'}
-          </button>
-        </form>
-      ) : (
-        <p className="chat-room__status-hint">You do not have permission to reply.</p>
-      )}
+        {canReply && !isClosed ? (
+          <form className="chat-room__form" onSubmit={handleSend}>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Reply as agent..."
+              maxLength={2000}
+            />
+            <button type="submit" disabled={sending}>
+              {sending ? 'Sending...' : 'Send'}
+            </button>
+          </form>
+        ) : isClosed ? null : (
+          <p className="chat-room__status-hint">You do not have permission to reply.</p>
+        )}
     </div>
   )
 }

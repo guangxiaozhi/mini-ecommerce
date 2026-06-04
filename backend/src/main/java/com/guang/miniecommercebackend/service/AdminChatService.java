@@ -37,6 +37,9 @@ public class AdminChatService {
     private static final String AGENT_JOINED_SYSTEM_MESSAGE =
             "An agent has joined the chat.";
 
+    private static final String CONVERSATION_CLOSED_SYSTEM_MESSAGE =
+            "This conversation has been closed.";
+
     public AdminChatService(ChatConversationRepository chatConversationRepository,
                             ChatParticipantRepository chatParticipantRepository,
                             ChatMessageRepository chatMessageRepository,
@@ -138,6 +141,13 @@ public class AdminChatService {
             }
         }
     }
+    private void assertCanCloseConversation() {
+        if (isSuperAdmin()) return;
+        if (!hasAuthority("CHAT_CONVERSATION_CLOSE")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "no permission to close conversations");
+        }
+    }
 
 //    确保客服是参与者，接单时把客服写进会话参与者表，接单时在 t_chat_participant 里写一条 HUMAN_AGENT 记录。
     private void ensureHumanAgentParticipant(ChatConversation conv, User agent) {
@@ -169,17 +179,24 @@ public class AdminChatService {
         Pageable pageable = PageRequest.of(page, size);
         ChatConversationStatus effectiveStatus = status != null ? status : ChatConversationStatus.WAITING_HUMAN; //要查哪种状态；不传默认当 WAITING_HUMAN（待接单）
 
-        if (assignedToMe == true){ // 查我接的单
-            effectiveStatus = ChatConversationStatus.ASSIGNED;
+        if (assignedToMe == true) { // 我负责的单：进行中 ASSIGNED，或已关闭 CLOSED
+            ChatConversationStatus mineStatus =
+                    status == ChatConversationStatus.CLOSED
+                            ? ChatConversationStatus.CLOSED
+                            : ChatConversationStatus.ASSIGNED;
             Page<ChatConversation> pageChat;
             if (type != null) {
                 assertCanViewType(type);
-                pageChat = chatConversationRepository.findByAssignedAgentUserIdAndStatusAndTypeOrderByCreatedAtDesc(agent.getId(), ChatConversationStatus.ASSIGNED, type, pageable);
+                pageChat = chatConversationRepository
+                        .findByAssignedAgentUserIdAndStatusAndTypeOrderByCreatedAtDesc(
+                                agent.getId(), mineStatus, type, pageable);
             } else {
                 if (!isSuperAdmin()) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "type is required");
                 }
-                pageChat = chatConversationRepository.findByAssignedAgentUserIdAndStatusOrderByCreatedAtDesc(agent.getId(), ChatConversationStatus.ASSIGNED, pageable);
+                pageChat = chatConversationRepository
+                        .findByAssignedAgentUserIdAndStatusOrderByCreatedAtDesc(
+                                agent.getId(), mineStatus, pageable);
             }
             return pageChat.map(this::toConversationResponse);
         } else { // 待接单 / 按 status的列表
@@ -232,7 +249,8 @@ public class AdminChatService {
         assertCanViewType(conv.getType());  //检查 VIEW 权限
 
         if (!isSuperAdmin()) {  //Super admin（ROLE_ADMIN）跳过下面限制，方便调试
-            if (conv.getStatus() != ChatConversationStatus.ASSIGNED) {  //还在 WAITING_HUMAN（待接单）时，普通客服不能先看聊天记录
+            if (conv.getStatus() != ChatConversationStatus.ASSIGNED
+                    && conv.getStatus() != ChatConversationStatus.CLOSED) {  //还在 WAITING_HUMAN（待接单）时，普通客服不能先看聊天记录
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                         "not allowed to view this conversation");
             }
@@ -290,6 +308,41 @@ public class AdminChatService {
         msg.setContent(req.getContent().trim());
         ChatMessage saved = chatMessageRepository.save(msg);
         return toMessageResponse(saved);
+    }
+
+    @Transactional
+    public ChatConversationResponse closeConversation(String username, Long conversationId) {
+        User agent = getUserByUsernameOr404(username);
+        ChatConversation conv = chatConversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "conversation not found"));
+
+        assertCanCloseConversation();
+
+        if (conv.getStatus() == ChatConversationStatus.CLOSED) {
+            return toConversationResponse(conv);  // 已关闭，幂等返回
+        }
+
+        if (conv.getStatus() != ChatConversationStatus.ASSIGNED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "only assigned conversations can be closed");
+        }
+
+        if (!isSuperAdmin()) {
+            if (!agent.getId().equals(conv.getAssignedAgentUserId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "not allowed to close this conversation");
+            }
+            if (!chatParticipantRepository.existsByConversationIdAndUserIdAndRole(
+                    conversationId, agent.getId(), ChatParticipantRole.HUMAN_AGENT)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "not allowed to close this conversation");
+            }
+        }
+
+        conv.setStatus(ChatConversationStatus.CLOSED);
+        chatConversationRepository.save(conv);
+        insertSystemMessage(conv, CONVERSATION_CLOSED_SYSTEM_MESSAGE);
+        return toConversationResponse(conv);
     }
 }
 

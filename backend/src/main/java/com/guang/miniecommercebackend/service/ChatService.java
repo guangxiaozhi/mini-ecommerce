@@ -39,6 +39,10 @@ public class ChatService {
     private static final String TRANSFER_TO_HUMAN_SYSTEM_MESSAGE =
             "Your request has been sent to our support team. Please wait for an agent.";
 
+    private static final String CONVERSATION_REOPENED_SYSTEM_MESSAGE =
+            "This conversation has been reopened. You are now chatting with our virtual assistant (not a live agent). "
+                    + "To speak with a human agent, tap \"Speak to an agent\" above or type \"Speak to an Agent\" .";
+
     private User getBotUserOr404() {
         return userRepository.findByUsername(chatBotUsername)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -231,6 +235,10 @@ public class ChatService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a participant of this conversation");
         }
 
+        if (conv.getStatus() == ChatConversationStatus.CLOSED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "conversation is closed");
+        }
+
         ChatConversationStatus st = conv.getStatus() != null ? conv.getStatus() : ChatConversationStatus.BOT;
 
         boolean botMayReply = st == ChatConversationStatus.BOT
@@ -292,6 +300,34 @@ public class ChatService {
         chatConversationRepository.save(conv);
 
         insertSystemMessage(conv, TRANSFER_TO_HUMAN_SYSTEM_MESSAGE);
+
+        return toConversationResponse(conv);
+    }
+
+    @Transactional
+    public ChatConversationResponse reopenConversation(String username, Long conversationId) {
+        User user = getUserByUsernameOr404(username);
+
+        ChatConversation conv = chatConversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "conversation not found"));
+
+        if (!chatParticipantRepository.existsByConversationIdAndUserId(conversationId, user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "not a participant of this conversation");
+        }
+
+        if (conv.getStatus() != ChatConversationStatus.CLOSED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "only closed conversations can be reopened");
+        }
+
+        conv.setStatus(ChatConversationStatus.BOT);
+        conv.setAssignedAgentUserId(null);
+        chatConversationRepository.save(conv);
+
+        chatParticipantRepository.deleteByConversationIdAndRole(
+                conversationId, ChatParticipantRole.HUMAN_AGENT);
+
+        insertSystemMessage(conv, CONVERSATION_REOPENED_SYSTEM_MESSAGE);
 
         return toConversationResponse(conv);
     }

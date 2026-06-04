@@ -90,6 +90,17 @@ public class AdminChatController {
         String username = (String) auth.getPrincipal();
         return adminChatService.sendMessageAsAgent(username, conversationId, body);
     }
+
+    // 关闭会话 POST /conversations/{id}/close
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ADMIN_PANEL') and hasAuthority('CHAT_CONVERSATION_CLOSE'))")
+    @PostMapping("/conversations/{conversationId}/close")
+    public ChatConversationResponse closeConversation(
+            Authentication auth,
+            @PathVariable("conversationId") Long conversationId) {
+        String username = (String) auth.getPrincipal();
+        return adminChatService.closeConversation(username, conversationId);
+    }
+
 }
 
 

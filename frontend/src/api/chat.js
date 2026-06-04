@@ -52,3 +52,11 @@ export function transferToHuman(token, conversationId) {
     headers: authHeaders(token),
   }).then(handleResponse)
 }
+
+/** POST 重新打开已关闭的会话 */
+export function reopenConversation(token, conversationId) {
+  return fetch(`${CHAT_BASE}/conversations/${conversationId}/reopen`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  }).then(handleResponse)
+}

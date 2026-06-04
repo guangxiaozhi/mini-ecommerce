@@ -24,4 +24,6 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
             Long conversationId,
             Long userId);
 
+    void deleteByConversationIdAndRole(Long conversationId, ChatParticipantRole role);
+
 }
