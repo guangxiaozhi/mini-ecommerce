@@ -1,26 +1,31 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { getMe} from "./api/auth.js";
-import {addToCart, getCart} from './api/cart.js';
+import { getMe} from "./api/auth.js"
+import {addToCart, getCart} from './api/cart.js'
 import './App.css'
 import UserProfile from './components/UserProfile/UserProfile.jsx'
 import Header from './components/Header/Header.jsx'
 import AuthModal from './components/AuthModal/AuthModal.jsx'
-import AdminProductsPage from "./components/AdminProductsPage/AdminProductsPage.jsx";
+import AdminProductsPage from "./components/AdminProductsPage/AdminProductsPage.jsx"
 import ProductCatalog from './components/ProductCatalog/ProductCatalog.jsx'
-import Cart from "./components/Cart/Cart.jsx";
+import Cart from "./components/Cart/Cart.jsx"
 import RequireAdmin from './components/RequireAdmin/RequireAdmin.jsx'
-import ProductDetail from "./components/ProductDetail/ProductDetail.jsx";
-import AdminLayout from "./components/AdminLayout/AdminLayout.jsx";
-import AdminDashboard from "./components/AdminDashboard/AdminDashboard.jsx";
-import AdminInventoryPage from "./components/AdminInventoryPage/AdminInventoryPage.jsx";
-import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx";
-import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx";
-import OrderListPage from "./components/OrderListPage/OrderListPage.jsx";
-import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx";
-import PaymentPage from "./components/PaymentPage/PaymentPage.jsx";
+import ProductDetail from "./components/ProductDetail/ProductDetail.jsx"
+import AdminLayout from "./components/AdminLayout/AdminLayout.jsx"
+import AdminDashboard from "./components/AdminDashboard/AdminDashboard.jsx"
+import AdminInventoryPage from "./components/AdminInventoryPage/AdminInventoryPage.jsx"
+import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx"
+import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx"
+import OrderListPage from "./components/OrderListPage/OrderListPage.jsx"
+import OrderDetailPage from "./components/OrderDetailPage/OrderDetailPage.jsx"
+import PaymentPage from "./components/PaymentPage/PaymentPage.jsx"
 import MyReviewsPage from "./components/MyReviewsPage/MyReviewsPage.jsx";
 import AdminReviewsPage from "./components/AdminReviewPage/AdminReviewPage.jsx";
+import ChatRoomPage from './components/ChatRoomPage/ChatRoomPage.jsx'
+import ChatListPage from './components/ChatListPage/ChatListPage.jsx'
+import AdminChatPage from './components/AdminChatPage/AdminChatPage.jsx'
+import AdminChatRoomPage from './components/AdminChatRoomPage/AdminChatRoomPage.jsx'
+
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -98,6 +103,9 @@ function App() {
           navigate('/',{replace:true})
       }
       if (location.pathname.startsWith('/orders')){
+          navigate('/',{replace:true})
+      }
+      if (location.pathname.startsWith('/chat')){
           navigate('/',{replace:true})
       }
   }
@@ -216,10 +224,12 @@ function App() {
                         <AdminLayout userName={userName} userRole={userRole} userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} onLogout={handleLogout}>
                             <Routes>
                                 <Route path="dashboard" element={<AdminDashboard />} />
-                                <Route path="products" element={<AdminProductsPage />} />
+                                <Route path="products" element={<AdminProductsPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin}  />} />
                                 <Route path="inventory" element={<AdminInventoryPage />} />
                                 <Route path="orders" element={<AdminOrdersPage />} />
                                 <Route path="users" element={<AdminUsersPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
+                                <Route path="chat" element={<AdminChatPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
+                                <Route path="chat/:conversationId" element={ <AdminChatRoomPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
                                 <Route path="reviews" element={<AdminReviewsPage />} />
                             </Routes>
                         </AdminLayout>
@@ -272,6 +282,38 @@ function App() {
                         }}
                     />
                 }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ChatListPage
+                  userName={userName}
+                  onNeedAuth={() => {
+                    setMsg('')
+                    setAuthOpen(true)
+                  }}
+                />
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ChatListPage
+                  userName={userName}
+                  onNeedAuth={() => {
+                    setMsg('')
+                    setAuthOpen(true)
+                  }}
+                />
+              }
+            />
+            <Route
+                path="/chat/:conversationId"
+                  element={
+                    <ChatRoomPage
+                      onNeedAuth={() => { setMsg(''); setAuthOpen(true) }}
+                    />
+                  }
             />
             <Route
                 path="/account/reviews"

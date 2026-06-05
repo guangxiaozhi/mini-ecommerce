@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProduct } from '../../api/products';
+import { createConversation } from '../../api/chat.js';
 import Stars from "../Stars/Stars.jsx";
 import {listProductReviews} from "../../api/reviews.js";
 import './ProductDetail.css';
@@ -111,6 +112,7 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
     const [error, setError] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [showFullView, setShowFullView] = useState(false);
+    const [chatLoading, setChatLoading] = useState(false);
 
     useEffect(() => {
         setSelectedImage(null)
@@ -136,6 +138,31 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
         ?[...product.images].sort((a,b)=>(a.sortOrder ?? 0) - (b.sortOrder ?? 0))
         : [];
     const displayImage = selectedImage ?? primaryImage;
+
+    async function handleContactSupport() {
+        if (!isLoggedIn) {
+            onNeedAuth?.();
+            return;
+        }
+        const token = localStorage.getItem('token');
+        if (!token) {
+            onNeedAuth?.();
+            return;
+        }
+        setChatLoading(true);
+        setError(null);
+        try {
+            const conv = await createConversation(token, {
+                type: 'INQUIRY',
+                productId: Number(id),
+            });
+            navigate(`/chat/${conv.id}`, { state: { conversation: conv } });
+        } catch (e) {
+            setError(e.message || 'Could not start chat.');
+        } finally {
+            setChatLoading(false);
+        }
+    }
 
     return (
         <div className="pd-page">
@@ -264,6 +291,14 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
                             }}
                         >
                             {product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                        </button>
+                        <button
+                            type="button"
+                            className="pd-btn-chat"
+                            disabled={chatLoading}
+                            onClick={handleContactSupport}
+                        >
+                            {chatLoading ? 'Starting chat...' : 'Contact customer service'}
                         </button>
                     </div>
                 </div>

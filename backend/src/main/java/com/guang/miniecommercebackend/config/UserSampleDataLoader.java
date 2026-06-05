@@ -61,6 +61,14 @@ public class UserSampleDataLoader implements CommandLineRunner {
             user.setRoles(Set.of(adminRole));
             userRepository.save(user);
         }
+        if (!userRepository.existsByUsername("chat_bot")){
+            User user = new User();
+            user.setUsername("chat_bot");
+            user.setPasswordHash(passwordEncoder.encode("bot-not-used"));
+            user.setRoles(Set.of(userRole));
+            userRepository.save(user);
+        }
+
     }
 
     private void seedRoleIfAbsent(String roleName, String description) {

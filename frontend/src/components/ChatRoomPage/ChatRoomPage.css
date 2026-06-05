@@ -1,0 +1,135 @@
+/* 整页容器 */
+.chat-room {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 1.5rem;
+  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.chat-room > button[type="button"] {
+  align-self: flex-start;
+  margin-bottom: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #374151;
+}
+
+.chat-room > button[type="button"]:hover {
+  background: #f3f4f6;
+}
+
+.chat-room__error {
+  color: #b91c1c;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
+}
+
+/* 消息区域：固定高度 + 滚动 */
+.chat-room__messages {
+  flex: 1;
+  height: 420px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* 单条气泡 */
+.chat-bubble {
+  max-width: 75%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.chat-bubble--mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-bubble--other {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.chat-bubble__text {
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.chat-bubble--mine .chat-bubble__text {
+  background: #2563eb;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble--other .chat-bubble__text {
+  background: #fff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bubble__meta {
+  font-size: 0.7rem;
+  color: #6b7280;
+  padding: 0 0.25rem;
+}
+
+/* 底部输入 */
+.chat-room__form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.chat-room__form input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.chat-room__form button[type="submit"] {
+  padding: 0.5rem 1rem;
+  /* 你原来的 submit 样式 */
+}
+
+.chat-room__transfer-btn {
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.chat-room__transfer-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chat-room__status-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
