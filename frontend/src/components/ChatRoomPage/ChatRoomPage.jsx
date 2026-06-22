@@ -109,6 +109,8 @@ export default function ChatRoomPage({ onNeedAuth }) {
           }
         }, [conversationId])
 
+
+
     async function handleTransfer() {
       const token = localStorage.getItem('token')
       if (!token) {
