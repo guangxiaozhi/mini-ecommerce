@@ -32,6 +32,7 @@ public class ChatService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final ChatMessagePublisher chatMessagePublisher;
 
     @Value("${chat.bot.username:chat_bot}")
     private String chatBotUsername;
@@ -54,7 +55,8 @@ public class ChatService {
                        ChatMessageRepository chatMessageRepository,
                        UserRepository userRepository,
                        OrderRepository orderRepository,
-                       ProductRepository productRepository
+                       ProductRepository productRepository,
+                       ChatMessagePublisher chatMessagePublisher
                        ){
         this.chatConversationRepository = chatConversationRepository;
         this.chatParticipantRepository = chatParticipantRepository;
@@ -62,6 +64,7 @@ public class ChatService {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.chatMessagePublisher = chatMessagePublisher;
     }
 
 //    按用户名取用户
@@ -143,7 +146,8 @@ public class ChatService {
         sys.setSenderUserId(bot.getId());
         sys.setType(ChatMessageType.SYSTEM);
         sys.setContent(content);
-        chatMessageRepository.save(sys);
+        ChatMessage saved = chatMessageRepository.save(sys);
+        chatMessagePublisher.publishToConversation(conv.getId(), toMessageResponse(saved));
     }
 
     public record CreateConversationOutcome(boolean created, ChatConversationResponse response) {}
@@ -250,7 +254,10 @@ public class ChatService {
         msg.setSenderUserId(user.getId());
         msg.setType(ChatMessageType.TEXT);
         msg.setContent(req.getContent().trim());
-        ChatMessage saved = chatMessageRepository.save(msg);
+        ChatMessage saved = chatMessageRepository.save(msg);     // 1. 先存库（和以前一样）
+
+        ChatMessageResponse userMsg = toMessageResponse(saved);
+        chatMessagePublisher.publishToConversation(conversationId, userMsg);  // 2. 再推送
 
         String text = req.getContent().trim();
 
@@ -260,7 +267,7 @@ public class ChatService {
                 chatConversationRepository.save(conv);
                 insertSystemMessage(conv, TRANSFER_TO_HUMAN_SYSTEM_MESSAGE);
             }
-            return toMessageResponse(saved);
+            return userMsg;
         }
 
         if (botMayReply) {
@@ -270,10 +277,11 @@ public class ChatService {
             reply.setSenderUserId(bot.getId());
             reply.setType(ChatMessageType.TEXT);
             reply.setContent("We have received your message. Our customer service assistant will get back to you as soon as possible.\n");
-            chatMessageRepository.save(reply);
+            ChatMessage savedReply = chatMessageRepository.save(reply);
+            chatMessagePublisher.publishToConversation(conversationId, toMessageResponse(savedReply));
         }
 
-        return toMessageResponse(saved);
+        return userMsg;
     }
 
     @Transactional

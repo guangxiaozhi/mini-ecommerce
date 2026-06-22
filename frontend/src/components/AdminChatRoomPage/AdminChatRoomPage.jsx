@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { listAdminMessages, sendAdminMessage, listAdminConversations, closeConversation } from '../../api/adminChat.js'
+import { connectChatSocket, subscribeConversation, disconnectChatSocket } from '../../api/chatSocket.js'
 import '../ChatRoomPage/ChatRoomPage.css'
 
 export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin = false }) {
@@ -49,11 +50,45 @@ export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin =
     }
   }
 
-  useEffect(() => {
-    loadMessages()
-    const timer = setInterval(loadMessages, 2000)
-    return () => clearInterval(timer)
-  }, [conversationId])
+    useEffect(() => {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('Please sign in again.')
+        setLoading(false)
+        return
+      }
+
+      loadMessages()
+
+      let unsubscribe = () => {}
+
+      connectChatSocket(token, {
+        onConnect: () => {
+          unsubscribe = subscribeConversation(conversationId, (newMsg) => {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === newMsg.id)) return prev
+              return [...prev, newMsg]
+            })
+            if (newMsg.type === 'SYSTEM') {
+              if (newMsg.content?.toLowerCase().includes('closed')) {
+                setConversationStatus('CLOSED')
+              }
+            }
+          })
+        },
+        onError: (msg) => {
+          console.warn('WebSocket:', msg)
+        },
+      })
+
+      const timer = setInterval(loadMessages, 15000) // 15 秒兜底即可
+
+      return () => {
+        unsubscribe()
+        disconnectChatSocket()
+        clearInterval(timer)
+      }
+    }, [conversationId])
 
     useEffect(() => {
       if (myAgentUserId != null && conversationStatus === 'CLOSED') return

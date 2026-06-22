@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { listMessages, sendMessage, listConversations, transferToHuman, reopenConversation } from '../../api/chat.js'
+import { connectChatSocket, subscribeConversation, disconnectChatSocket } from '../../api/chatSocket.js'
 import './ChatRoomPage.css'
 
 export default function ChatRoomPage({ onNeedAuth }) {
@@ -63,19 +64,50 @@ export default function ChatRoomPage({ onNeedAuth }) {
       }
     }
 
-    useEffect(() => {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        onNeedAuth?.()
-        setLoading(false)
-        return
-      }
-      loadMessages()
-      const timer = setInterval(loadMessages, 4000)
-      return () => clearInterval(timer)
-    }, [conversationId])
+        useEffect(() => {
+          const token = localStorage.getItem('token')
+          if (!token) {
+            onNeedAuth?.()
+            setLoading(false)
+            return
+          }
 
+          // ① 进页面先拉一次历史消息（REST，和以前一样）
+          loadMessages()
 
+          let unsubscribe = () => {}
+
+          // ② 建立 WebSocket 连接
+          connectChatSocket(token, {
+            onConnect: () => {
+              // ③ 连上后订阅当前会话
+              unsubscribe = subscribeConversation(conversationId, (newMsg) => {
+                setMessages((prev) => {
+                  // 按 id 去重：自己发的 + WS 推的可能是同一条
+                  if (prev.some((m) => m.id === newMsg.id)) return prev
+                  return [...prev, newMsg]
+                })
+                // SYSTEM 消息（转人工、关单等）时同步会话状态
+                if (newMsg.type === 'SYSTEM') {
+                  syncConversationMeta()
+                }
+              })
+            },
+            onError: (msg) => {
+              console.warn('WebSocket:', msg)
+            },
+          })
+
+          // ④ 先保留轮询兜底，WS5 测通后再删
+          const timer = setInterval(loadMessages, 15000) // 15 秒兜底即可
+
+          // ⑤ 离开页面时清理（非常重要！）
+          return () => {
+            unsubscribe()           // 取消 topic 订阅
+            disconnectChatSocket()  // 断开 WS 连接
+            clearInterval(timer)    // 停掉轮询
+          }
+        }, [conversationId])
 
     async function handleTransfer() {
       const token = localStorage.getItem('token')

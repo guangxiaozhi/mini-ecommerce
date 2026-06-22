@@ -30,6 +30,7 @@ public class AdminChatService {
     private final ChatParticipantRepository chatParticipantRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
+    private final ChatMessagePublisher chatMessagePublisher;
 
     //    接单后可选插一条 SYSTEM 消息，发送者仍是 bot 用户
     @Value("${chat.bot.username:chat_bot}")
@@ -43,11 +44,13 @@ public class AdminChatService {
     public AdminChatService(ChatConversationRepository chatConversationRepository,
                             ChatParticipantRepository chatParticipantRepository,
                             ChatMessageRepository chatMessageRepository,
-                            UserRepository userRepository){
+                            UserRepository userRepository,
+                            ChatMessagePublisher chatMessagePublisher){
         this.chatConversationRepository = chatConversationRepository;
         this.chatParticipantRepository = chatParticipantRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.userRepository = userRepository;
+        this.chatMessagePublisher = chatMessagePublisher;
     }
 
 //    Controller 传进来的是 JWT 里的 username，这里换成 User 实体（需要 user.getId()）
@@ -101,7 +104,8 @@ public class AdminChatService {
         sys.setSenderUserId(bot.getId());
         sys.setType(ChatMessageType.SYSTEM);
         sys.setContent(content);
-        chatMessageRepository.save(sys);
+        ChatMessage saved = chatMessageRepository.save(sys);
+        chatMessagePublisher.publishToConversation(conv.getId(), toMessageResponse(saved));
     }
 
 //    权限判断
@@ -307,7 +311,9 @@ public class AdminChatService {
         msg.setType(ChatMessageType.TEXT);
         msg.setContent(req.getContent().trim());
         ChatMessage saved = chatMessageRepository.save(msg);
-        return toMessageResponse(saved);
+        ChatMessageResponse agentMsg = toMessageResponse(saved);
+        chatMessagePublisher.publishToConversation(conversationId, agentMsg);
+        return agentMsg;
     }
 
     @Transactional
