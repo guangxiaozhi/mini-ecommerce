@@ -99,13 +99,13 @@ export default function ChatRoomPage({ onNeedAuth }) {
           })
 
           // ④ 先保留轮询兜底，WS5 测通后再删
-          const timer = setInterval(loadMessages, 15000) // 15 秒兜底即可
+//           const timer = setInterval(loadMessages, 15000) // 15 秒兜底即可
 
           // ⑤ 离开页面时清理（非常重要！）
           return () => {
             unsubscribe()           // 取消 topic 订阅
             disconnectChatSocket()  // 断开 WS 连接
-            clearInterval(timer)    // 停掉轮询
+//             clearInterval(timer)    // 停掉轮询
           }
         }, [conversationId])
 
