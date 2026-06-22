@@ -81,12 +81,12 @@ export default function AdminChatRoomPage({ userPermissions = [], isSuperAdmin =
         },
       })
 
-      const timer = setInterval(loadMessages, 15000) // 15 秒兜底即可
+//       const timer = setInterval(loadMessages, 15000) // 15 秒兜底即可
 
       return () => {
         unsubscribe()
         disconnectChatSocket()
-        clearInterval(timer)
+//         clearInterval(timer)
       }
     }, [conversationId])
 
